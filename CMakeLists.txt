@@ -35,7 +35,9 @@ set(SOURCE_FILES
 		src/hmdwidget.cpp
 		include/hmdwidget.h
 		src/videoplayer.cpp
-		include/videoplayer.h)
+                include/videoplayer.h
+                include/psvr_control.h
+                src/psvr_control.cpp)
 
 set(UI_FILES
 		src/mainwindow.ui)
