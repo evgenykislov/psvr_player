@@ -22,6 +22,7 @@
 #include <QMainWindow>
 #include <QTimer>
 
+#include "key_filter.h"
 #include "psvrthread.h"
 #include "videoplayer.h"
 #include "psvr.h"
@@ -92,6 +93,8 @@ class MainWindow : public QMainWindow
 
  private:
   PsvrControl psvr_control_;
+
+  KeyFilter key_filter_;
 };
 
 

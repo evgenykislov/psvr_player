@@ -37,7 +37,9 @@ set(SOURCE_FILES
 		src/videoplayer.cpp
                 include/videoplayer.h
                 include/psvr_control.h
-                src/psvr_control.cpp)
+                src/psvr_control.cpp
+                include/key_filter.h
+                src/key_filter.cpp)
 
 set(UI_FILES
 		src/mainwindow.ui)

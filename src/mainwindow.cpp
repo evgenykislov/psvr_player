@@ -39,6 +39,9 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_t
 
 	ui->setupUi(this);
 
+  installEventFilter(&key_filter_);
+  grabKeyboard();
+
 	setWindowTitle(windowTitle() + " " + QString(PROJECT_VERSION));
 
 	player_position_delay_timer.setInterval(16);
@@ -50,7 +53,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_t
 	connect(video_player, SIGNAL(PositionChanged(float)), this, SLOT(PlayerPositionChanged(float)));
 	connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
 	connect(video_player, SIGNAL(Paused()), this, SLOT(PlayerPaused()));
-	connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()));
+  connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()));
 
 
 	connect(ui->RefreshHIDDevicesButton, SIGNAL(clicked()), this, SLOT(RefreshHIDDevices()));
@@ -59,7 +62,8 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_t
 	connect(ui->OpenButton, SIGNAL(clicked()), this, SLOT(OpenVideoFile()));
 
 	connect(ui->PlayButton, SIGNAL(clicked()), this, SLOT(UIPlayerPlay()));
-	connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
+  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()));
+  connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
 	connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
@@ -82,6 +86,9 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_t
 
 MainWindow::~MainWindow()
 {
+  releaseKeyboard();
+  removeEventFilter(&key_filter_);
+
 	delete ui;
 
 	if(hid_device_infos)
