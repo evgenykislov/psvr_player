@@ -25,6 +25,7 @@
 #include "psvrthread.h"
 #include "videoplayer.h"
 #include "psvr.h"
+#include "psvr_control.h"
 
 namespace Ui
 {
@@ -88,6 +89,9 @@ class MainWindow : public QMainWindow
 	protected:
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+
+ private:
+  PsvrControl psvr_control_;
 };
 
 

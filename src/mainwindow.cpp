@@ -182,6 +182,13 @@ void MainWindow::ConnectPSVR()
 
 	if(psvr->Open(dev->path))
 	{
+    if (!psvr_control_.OpenDevice()) {
+      QMessageBox::critical(this, tr("PSVR Player"), tr("Failed to connect to HID control device."));
+    }
+    else {
+      psvr_control_.SetVRMode(true);
+    }
+
 		psvr_thread->start();
 		ui->ConnectHIDDeviceButton->setText(tr("Disconnect"));
 	}
