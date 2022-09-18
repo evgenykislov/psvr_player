@@ -29,6 +29,8 @@ class VideoPlayer : public QObject
 	Q_OBJECT
 
 	private:
+    const static int kParseTimeout = 0;
+
 		libvlc_instance_t *libvlc;
 		libvlc_media_t *media;
 		libvlc_media_player_t *media_player;
@@ -39,6 +41,7 @@ class VideoPlayer : public QObject
 		QMutex data_mutex;
 
 		void UnloadVideo();
+    void OnParsed();
 
 	public:
 		VideoPlayer(QObject *parent = 0);
@@ -76,6 +79,7 @@ class VideoPlayer : public QObject
 		void Paused();
 		void Stopped();
 		void PositionChanged(float pos);
+    void DurationParsed(unsigned int dur_ms);
 };
 
 #endif //PSVR_VIDEOPLAYER_H

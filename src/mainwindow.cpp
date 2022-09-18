@@ -28,7 +28,10 @@
 
 #include "project_version.h"
 
-MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_thread, QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
+    PSVRThread *psvr_thread, QWidget *parent):
+    QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
+    current_play_position_(0)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -54,7 +57,8 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_t
 	connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
 	connect(video_player, SIGNAL(Paused()), this, SLOT(PlayerPaused()));
   connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()));
-
+  connect(video_player, SIGNAL(DurationParsed(unsigned int)), this,
+      SLOT(PlayerDurationParsed(unsigned int)), Qt::QueuedConnection);
 
 	connect(ui->RefreshHIDDevicesButton, SIGNAL(clicked()), this, SLOT(RefreshHIDDevices()));
 	connect(ui->ConnectHIDDeviceButton, SIGNAL(clicked()), this, SLOT(ConnectPSVR()));
@@ -287,7 +291,17 @@ void MainWindow::PlayerPositionChanged(float pos)
 {
 	if(!ui->PlayerSlider->isSliderDown() || player_position_delay_timer.isActive())
 		ui->PlayerSlider->setValue((int)((float)ui->PlayerSlider->maximum() * pos));
+
+  current_play_position_ = static_cast<uint64_t>(media_duration_ * pos);
+  ui->CurPosLabel->setText(FormatPlayTime(current_play_position_));
 }
+
+
+void MainWindow::PlayerDurationParsed(unsigned int dur_ms) {
+  media_duration_ = dur_ms;
+  ui->DurationLabel->setText(QString("/ ") + FormatPlayTime(media_duration_));
+}
+
 
 void MainWindow::UIPlayerPositionChangedDelayed()
 {
@@ -371,4 +385,19 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	}
 
 	QMainWindow::closeEvent(event);
+}
+
+
+QString MainWindow::FormatPlayTime(uint64_t value_ms) {
+  uint64_t top = value_ms;
+  top /= 100; // Removes ms and 10ms
+  unsigned int ms100 = top % 10;
+  top /= 10;
+  unsigned int sec = top % 60;
+  top /= 60;
+  unsigned int min = top % 60;
+  unsigned int hour = top / 60;
+  QChar fc = QLatin1Char('0');
+  return QString("%1:%2:%3.%4").arg(hour, 2, 10, fc).arg(min, 2, 10, fc).\
+      arg(sec, 2, 10, fc).arg(ms100, 1, 10, fc);
 }

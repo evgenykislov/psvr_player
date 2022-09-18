@@ -103,6 +103,16 @@ bool VideoPlayer::LoadVideo(const char *path)
 		return false;
 	}
 
+  auto media_evman = libvlc_media_event_manager(media);
+  assert(media_evman);
+  libvlc_event_attach(media_evman, libvlc_MediaParsedChanged, vlc_event, this);
+  // TODO event_detach is nessesary or not?
+
+  if (libvlc_media_parse_with_options(media, libvlc_media_parse_network,
+      kParseTimeout) == -1) {
+    // TODO process parsing error
+  }
+
 	media_player = libvlc_media_player_new_from_media(media);
 	if(!media_player)
 	{
@@ -141,6 +151,14 @@ void VideoPlayer::UnloadVideo()
 	media = 0;
 	media_player = 0;
 	event_manager = 0;
+}
+
+
+void VideoPlayer::OnParsed() {
+  auto dur = libvlc_media_get_duration(media);
+  if (dur != -1) {
+    emit DurationParsed(static_cast<unsigned int>(dur));
+  }
 }
 
 void VideoPlayer::Play()
@@ -235,6 +253,9 @@ void VideoPlayer::VLC_Event(const struct libvlc_event_t *event)
 		case libvlc_MediaPlayerStopped:
 			emit Stopped();
 			break;
+    case libvlc_MediaParsedChanged:
+      OnParsed();
+      break;
 		default:
 			break;
 	}

@@ -81,6 +81,7 @@ class MainWindow : public QMainWindow
 		void PlayerPaused();
 		void PlayerStopped();
 		void PlayerPositionChanged(float pos);
+    void PlayerDurationParsed(unsigned int dur_ms);
 
 		void UpdateVideoAngle();
 		void UpdateVideoProjection();
@@ -95,6 +96,10 @@ class MainWindow : public QMainWindow
   PsvrControl psvr_control_;
 
   KeyFilter key_filter_;
+  uint64_t media_duration_; // in ms
+  uint64_t current_play_position_; // in ms
+
+  QString FormatPlayTime(uint64_t value_ms);
 };
 
 
