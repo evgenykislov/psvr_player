@@ -78,6 +78,7 @@ class MainWindow : public QMainWindow
 		void UIPlayerPositionChangedDelayed();
 
     void UIPlayerMakeStep(int move_ms);
+    void UIPlayerFullScreen();
 
 		void PlayerPlaying();
 		void PlayerPaused();

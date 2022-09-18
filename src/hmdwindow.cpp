@@ -42,6 +42,15 @@ HMDWindow::~HMDWindow()
 	delete hmd_widget;
 }
 
+void HMDWindow::SwitchFullScreen() {
+  if (isFullScreen()) {
+    showNormal();
+  }
+  else {
+    showFullScreen();
+  }
+}
+
 void HMDWindow::keyPressEvent(QKeyEvent *event)
 {
 	switch(event->key())

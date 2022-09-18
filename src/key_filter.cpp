@@ -42,7 +42,9 @@ KeyEvent g_keys[] = {
   {Qt::Key_Right, false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(600000); }},
   // Reset view
   {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
-  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }}
+  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  // Full screen
+  {Qt::Key_F11,   false, false, false, [](KeyFilter* kf){ emit kf->FullScreen(); }}
 };
 
 bool KeyFilter::eventFilter(QObject*, QEvent* event) {

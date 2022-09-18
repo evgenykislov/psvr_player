@@ -73,6 +73,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
   connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(FullScreen()), this, SLOT(UIPlayerFullScreen()), Qt::QueuedConnection);
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
@@ -342,6 +343,13 @@ void MainWindow::UIPlayerMakeStep(int move_ms) {
   }
 
   video_player->SetPosition(pos);
+}
+
+
+void MainWindow::UIPlayerFullScreen() {
+  if(hmd_window) {
+    hmd_window->SwitchFullScreen();
+  }
 }
 
 
