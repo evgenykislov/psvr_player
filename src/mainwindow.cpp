@@ -66,9 +66,11 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
 	connect(ui->OpenButton, SIGNAL(clicked()), this, SLOT(OpenVideoFile()));
 
 	connect(ui->PlayButton, SIGNAL(clicked()), this, SLOT(UIPlayerPlay()));
-  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()));
   connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
 	connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
+
+  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()));
+  connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)));
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
@@ -311,6 +313,24 @@ void MainWindow::UIPlayerPositionChangedDelayed()
 		player_position_delayed = -1.0f;
 	}
 }
+
+
+void MainWindow::UIPlayerMakeStep(int move_ms) {
+  float pos = 0.0f;
+
+  if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
+    // Goto start
+  }
+  else if (media_duration_ == 0) {
+    // Use default value
+  }
+  else {
+    pos = static_cast<float>(current_play_position_ + move_ms) / media_duration_;
+  }
+
+  video_player->SetPosition(pos);
+}
+
 
 void MainWindow::UpdateVideoAngle()
 {

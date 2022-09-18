@@ -32,6 +32,7 @@ class KeyFilter: public QObject {
 
  signals:
    void PauseSignal();
+   void MakeStep(int move_ms);
 };
 
 
