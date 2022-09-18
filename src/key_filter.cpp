@@ -33,12 +33,16 @@ struct KeyEvent {
 
 KeyEvent g_keys[] = {
   {Qt::Key_Space, false, false, false, [](KeyFilter* kf){ emit kf->PauseSignal(); }},
+  // Fast forward
   {Qt::Key_Left,  false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(-10000); }},
   {Qt::Key_Right, false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(10000); }},
   {Qt::Key_Left,  true,  false, false, [](KeyFilter* kf){ emit kf->MakeStep(-60000); }},
   {Qt::Key_Right, true,  false, false, [](KeyFilter* kf){ emit kf->MakeStep(60000); }},
   {Qt::Key_Left,  false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(-600000); }},
   {Qt::Key_Right, false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(600000); }},
+  // Reset view
+  {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }}
 };
 
 bool KeyFilter::eventFilter(QObject*, QEvent* event) {

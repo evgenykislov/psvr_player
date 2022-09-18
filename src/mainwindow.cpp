@@ -69,8 +69,9 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
   connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
 	connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
 
-  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()));
-  connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)));
+  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
