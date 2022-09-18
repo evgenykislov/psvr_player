@@ -46,6 +46,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
   grabKeyboard();
 
 	setWindowTitle(windowTitle() + " " + QString(PROJECT_VERSION));
+  last_directory_ = QDir::currentPath();
 
 	player_position_delay_timer.setInterval(16);
 	player_position_delay_timer.setSingleShot(true);
@@ -230,10 +231,21 @@ void MainWindow::ResetView()
 
 void MainWindow::OpenVideoFile()
 {
-	QString file = QFileDialog::getOpenFileName(this, tr("Open Video"), QDir::currentPath(), tr("All files (*)"), Q_NULLPTR, QFileDialog::DontUseNativeDialog);
+  QString file;
+  QFileDialog dlg(this, tr("Open Video"), last_directory_, tr("All files (*)"));
+  dlg.setOptions(QFileDialog::DontUseNativeDialog);
+  dlg.setFileMode(QFileDialog::ExistingFile);
+  if (dlg.exec()) {
+    last_directory_ = dlg.directory().path();
+    auto fl = dlg.selectedFiles();
+    if (!fl.empty()) {
+      file = fl.front();
+    }
+  }
 
-	if(file.isNull())
+  if(file.isEmpty()) {
 		return;
+  }
 
 	if(!video_player->LoadVideo(QDir::toNativeSeparators(file).toLocal8Bit().constData()))
 	{
