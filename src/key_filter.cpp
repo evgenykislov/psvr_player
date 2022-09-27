@@ -32,7 +32,8 @@ struct KeyEvent {
 };
 
 KeyEvent g_keys[] = {
-  {Qt::Key_Space, false, false, false, [](KeyFilter* kf){ emit kf->PauseSignal(); }},
+  {Qt::Key_Space, false, false, false, [](KeyFilter* kf){ emit kf->Pause(); }},
+  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->Stop(); }},
   // Fast forward
   {Qt::Key_Left,  false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(-10000); }},
   {Qt::Key_Right, false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(10000); }},
@@ -42,7 +43,8 @@ KeyEvent g_keys[] = {
   {Qt::Key_Right, false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(600000); }},
   // Reset view
   {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
-  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  {Qt::Key_Up,    true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  {Qt::Key_Down,  true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
   // Full screen
   {Qt::Key_F11,   false, false, false, [](KeyFilter* kf){ emit kf->FullScreen(); }}
 };

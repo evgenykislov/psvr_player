@@ -109,6 +109,11 @@ void PsvrControl::CloseDevice() {
   }
 }
 
+bool PsvrControl::IsOpened()
+{
+  return device_;
+}
+
 bool PsvrControl::SetVRMode(bool vrmode)
 {
   buffer_[0] = 0x23;

@@ -73,6 +73,7 @@ class MainWindow : public QMainWindow
 
 		void UIPlayerPlay();
 		void UIPlayerStop();
+    void UIPlayerStopPlay();
 		void UIPlayerPositionChanged(int value);
 
 		void UIPlayerPositionChangedDelayed();

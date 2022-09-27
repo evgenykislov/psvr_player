@@ -70,10 +70,11 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
   connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
 	connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
 
-  connect(&key_filter_, SIGNAL(PauseSignal()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Pause()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(FullScreen()), this, SLOT(UIPlayerFullScreen()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Stop()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
@@ -270,6 +271,17 @@ void MainWindow::UIPlayerStop()
 	video_player->Stop();
 }
 
+
+void MainWindow::UIPlayerStopPlay()
+{
+  if(video_player->IsPlaying()) {
+    video_player->Stop();
+  }
+  else {
+    video_player->Play();
+  }
+}
+
 void MainWindow::UIPlayerPositionChanged(int value)
 {
 	float pos = (float)value / (float)ui->PlayerSlider->maximum();
@@ -287,6 +299,13 @@ void MainWindow::UIPlayerPositionChanged(int value)
 
 void MainWindow::PlayerPlaying()
 {
+  if (!psvr_control_.IsOpened() && !psvr_control_.OpenDevice()) {
+    QMessageBox::critical(this, tr("PSVR Player"), tr("Failed to connect to HID control device."));
+  }
+  else {
+    psvr_control_.SetVRMode(true);
+  }
+
 	ui->StopButton->setEnabled(true);
 	ui->PlayButton->setText(tr("Pause"));
 }
@@ -301,6 +320,10 @@ void MainWindow::PlayerStopped()
 	ui->StopButton->setEnabled(false);
 	ui->PlayerSlider->setValue(0);
 	ui->PlayButton->setText(tr("Play"));
+
+  if (psvr_control_.IsOpened() || psvr_control_.OpenDevice()) {
+    psvr_control_.SetVRMode(false);
+  }
 }
 
 void MainWindow::PlayerPositionChanged(float pos)

@@ -34,6 +34,8 @@ class PsvrControl {
   bool OpenDevice();
   void CloseDevice();
 
+  bool IsOpened();
+
   bool SetVRMode(bool vrmode);
 
 
