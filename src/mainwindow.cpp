@@ -306,6 +306,12 @@ void MainWindow::PlayerPlaying()
     psvr_control_.SetVRMode(true);
   }
 
+  if (ui->AutoFullScreenChk->isChecked()) {
+    if (hmd_window) {
+      hmd_window->showFullScreen();
+    }
+  }
+
 	ui->StopButton->setEnabled(true);
 	ui->PlayButton->setText(tr("Pause"));
 }
@@ -320,6 +326,12 @@ void MainWindow::PlayerStopped()
 	ui->StopButton->setEnabled(false);
 	ui->PlayerSlider->setValue(0);
 	ui->PlayButton->setText(tr("Play"));
+
+  if (ui->AutoFullScreenChk->isChecked()) {
+    if (hmd_window) {
+      hmd_window->showNormal();
+    }
+  }
 
   if (psvr_control_.IsOpened() || psvr_control_.OpenDevice()) {
     psvr_control_.SetVRMode(false);
