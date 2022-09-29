@@ -144,10 +144,10 @@ void HMDWidget::initializeGL()
 	video_tex->setFormat(QOpenGLTexture::RGB8_UNorm);
 	video_tex->setSize(1, 1);
 	video_tex->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-	video_tex->allocateStorage(rgb_workaround ? QOpenGLTexture::RGB : QOpenGLTexture::BGR, QOpenGLTexture::PixelType::UInt8);
+  video_tex->allocateStorage(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8);
 	video_tex->bind();
 	unsigned char data[3] = { 0, 0, 0};
-	video_tex->setData(rgb_workaround ? QOpenGLTexture::RGB : QOpenGLTexture::BGR, QOpenGLTexture::PixelType::UInt8, (const void *)data);
+  video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, (const void *)data);
 
 
 	/*distortion_shader = new QOpenGLShaderProgram(this);
@@ -220,11 +220,11 @@ void HMDWidget::UpdateTexture()
 		video_tex->setFormat(QOpenGLTexture::RGB8_UNorm);
 		video_tex->setSize(video_player->GetWidth(), video_player->GetHeight());
 		video_tex->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-		video_tex->allocateStorage(rgb_workaround ? QOpenGLTexture::RGB : QOpenGLTexture::BGR, QOpenGLTexture::PixelType::UInt8);
+    video_tex->allocateStorage(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8);
 	}
 
 	video_tex->bind();
-	video_tex->setData(rgb_workaround ? QOpenGLTexture::RGB : QOpenGLTexture::BGR, QOpenGLTexture::PixelType::UInt8, video_player->GetVideoData());
+  video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_player->GetVideoData());
 }
 
 void HMDWidget::RenderEye(int eye)
@@ -253,7 +253,7 @@ void HMDWidget::RenderEye(int eye)
   sphere_shader->setUniformValue("cylinder_type", cylinder_screen_);
 	video_tex->bind(0);
 
-	int eye_inv = invert_stereo ? 1 - eye : eye;
+  int eye_inv = invert_stereo ? eye : 1 - eye;
 
 	switch(video_projection_mode)
 	{
