@@ -18,7 +18,8 @@
 
 #include "hmdwidget.h"
 
-HMDWidget::HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent) : QOpenGLWidget(parent)
+HMDWidget::HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent):
+  QOpenGLWidget(parent), cylinder_screen_(false)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -42,7 +43,11 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent) : Q
 HMDWidget::~HMDWidget()
 {
 	delete video_tex;
-	//delete fbo;
+  //delete fbo;
+}
+
+void HMDWidget::SetCylinderScreen(bool value) {
+  cylinder_screen_ = value;
 }
 
 
@@ -130,7 +135,6 @@ void HMDWidget::initializeGL()
 	cube_vao.bind();
 	sphere_shader->enableAttributeArray(0);
 	sphere_shader->setAttributeBuffer(0, GL_FLOAT, 0, 3);
-
 	sphere_shader->release();
 	cube_vbo.release();
 	cube_vao.release();
@@ -246,6 +250,7 @@ void HMDWidget::RenderEye(int eye)
 	sphere_shader->setUniformValue("modelview_projection_uni", projection_matrix * modelview_matrix);
 
 	sphere_shader->setUniformValue("tex_uni", 0);
+  sphere_shader->setUniformValue("cylinder_type", cylinder_screen_);
 	video_tex->bind(0);
 
 	int eye_inv = invert_stereo ? 1 - eye : eye;

@@ -23,13 +23,47 @@
 uniform sampler2D tex_uni;
 uniform vec4 min_max_uv_uni;
 uniform float projection_angle_factor_uni;
+uniform bool cylinder_type;
 
 in vec3 position_var;
 
 out vec4 color_out;
 
+
+vec4 GetCylinderColor(vec3 position) {
+  const float cylinder_radius = 8.0;
+  const float plane_distance = 1.0;
+  const float plane_arc = 1.3;
+  const float xarc = plane_arc * plane_distance / cylinder_radius; // in radians
+  const float yarc = xarc / 16.0 * 9.0;
+  float relx = position.x / (position.z / plane_distance);
+  float rely = position.y / (position.z / plane_distance);
+  float anglex = atan(-relx, cylinder_radius);
+  float angley = atan(rely, cylinder_radius);
+
+  if (anglex < -xarc/2 || anglex > xarc/2) {
+    return vec4(0.0);
+  }
+
+  if (angley < -yarc/2 || angley > yarc/2) {
+    return vec4(0.0);
+  }
+
+  vec2 cyl_coor;
+  cyl_coor.x = 0.5 * anglex / (xarc / 2.0) + 0.5;
+  cyl_coor.y = 0.5 * angley / (yarc / 2.0) + 0.5;
+
+  vec2 uv = min_max_uv_uni.xy + (min_max_uv_uni.zw - min_max_uv_uni.xy) * cyl_coor;
+  return vec4(texture(tex_uni, uv).rgb, 1.0);
+}
+
+
 void main(void)
 {
+  if (cylinder_type) {
+    color_out = GetCylinderColor(position_var);
+  }
+  else {
 	vec2 dir_h = position_var.xz;
 	float length_h = length(dir_h);
 	dir_h /= length_h;
@@ -56,4 +90,5 @@ void main(void)
 	}
 
 	color_out = vec4(color, 1.0);
+  }
 }

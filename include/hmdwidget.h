@@ -70,6 +70,7 @@ class HMDWidget : public QOpenGLWidget
 		bool invert_stereo;
 
 		bool rgb_workaround;
+    bool cylinder_screen_;
 
 		//void CreateFBO(int width, int height);
 		void UpdateTexture();
@@ -84,6 +85,8 @@ class HMDWidget : public QOpenGLWidget
 
 		int GetVideoAngle()										{ return video_angle; }
 		void SetVideoAngle(int angle)							{ this->video_angle = angle; }
+
+    void SetCylinderScreen(bool value);
 
 		VideoProjectionMode GetVideoProjectionMode()			{ return video_projection_mode; }
 		void SetVideoProjectionMode(VideoProjectionMode mode)	{ this->video_projection_mode = mode; }

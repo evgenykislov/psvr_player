@@ -83,6 +83,8 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
 	connect(ui->Angle180RadioButton, SIGNAL(toggled(bool)), this, SLOT(UpdateVideoAngle()));
 	connect(ui->AngleCustomRadioButton, SIGNAL(toggled(bool)), this, SLOT(UpdateVideoAngle()));
 	connect(ui->AngleCustomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(UpdateVideoAngle()));
+  connect(ui->CylinderRBut, SIGNAL(toggled(bool)), this, SLOT(UpdateVideoAngle()));
+
 
 	connect(ui->StereoMonoscopicRadioButton, SIGNAL(toggled(bool)), this, SLOT(UpdateVideoProjection()));
 	connect(ui->StereoOverUnderRadioButton, SIGNAL(toggled(bool)), this, SLOT(UpdateVideoProjection()));
@@ -391,6 +393,10 @@ void MainWindow::UIPlayerFullScreen() {
 void MainWindow::UpdateVideoAngle()
 {
 	HMDWidget *hmd_widget = hmd_window->GetHMDWidget();
+  if (!hmd_widget) {
+    assert(false);
+    return;
+  }
 
 	if(ui->Angle360RadioButton->isChecked())
 	{
@@ -407,6 +413,8 @@ void MainWindow::UpdateVideoAngle()
 		hmd_widget->SetVideoAngle((int)ui->AngleCustomSpinBox->value());
 		ui->AngleCustomSpinBox->setEnabled(true);
 	}
+
+  hmd_widget->SetCylinderScreen(ui->CylinderRBut->isChecked());
 }
 
 void MainWindow::UpdateVideoProjection()
