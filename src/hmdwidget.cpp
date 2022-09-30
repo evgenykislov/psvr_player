@@ -38,6 +38,8 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent):
 	invert_stereo = false;
 
 	rgb_workaround = false;
+
+  GenerateCubeVertices();
 }
 
 HMDWidget::~HMDWidget()
@@ -129,7 +131,7 @@ void HMDWidget::initializeGL()
 	cube_vbo.create();
 	cube_vbo.bind();
 	cube_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-	cube_vbo.allocate(cube_vertices, sizeof(cube_vertices));
+  cube_vbo.allocate(cube_vertices_.data(), cube_vertices_.size() * sizeof(QVector3D));
 
 	cube_vao.create();
 	cube_vao.bind();
@@ -195,7 +197,75 @@ void HMDWidget::paintGL()
 	RenderEye(0);
 	RenderEye(1);
 
-	update();
+  update();
+}
+
+void HMDWidget::GenerateCubeVertices() {
+  QVector3D ltn(-1.0f,  1.0f, -1.0f);
+  QVector3D lbn(-1.0f, -1.0f, -1.0f);
+  QVector3D rbn( 1.0f, -1.0f, -1.0f);
+  QVector3D rtn( 1.0f,  1.0f, -1.0f);
+  QVector3D ltf(-1.0f,  1.0f,  1.0f);
+  QVector3D lbf(-1.0f, -1.0f,  1.0f);
+  QVector3D rbf( 1.0f, -1.0f,  1.0f);
+  QVector3D rtf( 1.0f,  1.0f,  1.0f);
+
+  AddFaceToVertices(ltn, lbn, rbn, rtn); // Back
+  AddFaceToVertices(rtf, rbf, lbf, ltf); // Front
+  AddFaceToVertices(ltf, lbf, lbn, ltn); // Left
+  AddFaceToVertices(rtn, rbn, rbf, rtf); // Right
+  AddFaceToVertices(ltn, rtn, rtf, ltf); // Top
+  AddFaceToVertices(rbn, lbn, lbf, rbf); // Bottom
+
+// Check with original cube_vertices.
+//  assert(cube_vertices_.size() == 36);
+//  float max_dif = 0.0f;
+//  size_t max_index = 0;
+//  for (size_t i = 0; i < 36; ++i) {
+//    auto dif = (cube_vertices_[i] - cube_vertices[i]).length();
+//    if (dif > max_dif) {
+//      max_dif = dif;
+//      max_index = i;
+//    }
+//  }
+}
+
+void HMDWidget::AddFaceToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4)
+{
+  for (size_t i = 0; i < kTriangleFactor; ++i) {
+    for (size_t j = 0; j < kTriangleFactor; ++j) {
+      QVector3D s1 = ApproximateVertice(p1, p2, p3, p4,
+        static_cast<double>(i) / kTriangleFactor,
+        static_cast<double>(j) / kTriangleFactor);
+      QVector3D s2 = ApproximateVertice(p1, p2, p3, p4,
+        static_cast<double>(i + 1) / kTriangleFactor,
+        static_cast<double>(j) / kTriangleFactor);
+      QVector3D s3 = ApproximateVertice(p1, p2, p3, p4,
+        static_cast<double>(i + 1) / kTriangleFactor,
+        static_cast<double>(j + 1) / kTriangleFactor);
+      QVector3D s4 = ApproximateVertice(p1, p2, p3, p4,
+        static_cast<double>(i) / kTriangleFactor,
+        static_cast<double>(j + 1) / kTriangleFactor);
+      AddSquareToVertices(s1, s2, s3, s4);
+    }
+  }
+}
+
+void HMDWidget::AddSquareToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4)
+{
+  cube_vertices_.push_back(p1);
+  cube_vertices_.push_back(p2);
+  cube_vertices_.push_back(p3);
+  cube_vertices_.push_back(p3);
+  cube_vertices_.push_back(p4);
+  cube_vertices_.push_back(p1);
+}
+
+QVector3D HMDWidget::ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4, float f1, float f2)
+{
+  QVector3D l = (p2 - p1) * f1 + p1;
+  QVector3D r = (p3 - p4) * f1 + p4;
+  return (r - l) * f2 + l;
 }
 
 
@@ -277,7 +347,7 @@ void HMDWidget::RenderEye(int eye)
 	sphere_shader->setUniformValue("projection_angle_factor_uni", 360.0f / (float)video_angle);
 
 	cube_vao.bind();
-	gl->glDrawArrays(GL_TRIANGLES, 0, 6*6);
+  gl->glDrawArrays(GL_TRIANGLES, 0, cube_vertices_.size());
 	cube_vao.release();
 	sphere_shader->release();
 

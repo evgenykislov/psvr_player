@@ -100,6 +100,17 @@ class HMDWidget : public QOpenGLWidget
 		void initializeGL() Q_DECL_OVERRIDE;
 		void resizeGL(int w, int h) Q_DECL_OVERRIDE;
 		void paintGL() Q_DECL_OVERRIDE;
+
+ private:
+  static const size_t kTriangleFactor = 32;
+  std::vector<QVector3D> cube_vertices_;
+
+
+  void GenerateCubeVertices();
+  void AddFaceToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4);
+  void AddSquareToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4);
+  QVector3D ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4, float f1, float f2);
+
 };
 
 
