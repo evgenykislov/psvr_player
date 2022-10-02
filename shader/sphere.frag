@@ -36,7 +36,7 @@ out vec4 color_out;
 
 
 vec4 GetCylinderColor(vec3 position) {
-  const float cylinder_radius = 8.0;
+  const float cylinder_radius = 1.0;
   const float plane_distance = 1.0;
   const float plane_arc = 1.3;
   const float xarc = plane_arc * plane_distance / cylinder_radius; // in radians
@@ -95,18 +95,23 @@ vec4 GetSphereColor(vec3 position) {
 
 void main(void)
 {
+  // Calculates position of colored point
+  vec3 pos_red = position_var; // Red without correction
+  vec3 pos_blue = position_var;
+  pos_blue.x += pos_blue.z * blue_x_disp;
+  pos_blue.y += pos_blue.z * blue_y_disp;
+  vec3 pos_green = position_var;
+  pos_green.x += pos_green.z * green_x_disp;
+  pos_green.y += pos_green.z * green_y_disp;
+
   if (cylinder_type) {
-    color_out = GetCylinderColor(position_var);
+    color_out = GetCylinderColor(pos_red);
+    color_out.b = GetCylinderColor(pos_blue).b;
+    color_out.g = GetCylinderColor(pos_green).g;
   }
   else {
-    color_out = GetSphereColor(position_var);
-    vec3 pos = position_var;
-    pos.x += pos.z * blue_x_disp;
-    pos.y += pos.z * blue_y_disp;
-    color_out.b = GetSphereColor(pos).b;
-    pos = position_var;
-    pos.x += pos.z * green_x_disp;
-    pos.y += pos.z * green_y_disp;
-    color_out.g = GetSphereColor(pos).g;
+    color_out = GetSphereColor(pos_red);
+    color_out.b = GetSphereColor(pos_blue).b;
+    color_out.g = GetSphereColor(pos_green).g;
   }
 }
