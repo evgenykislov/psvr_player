@@ -23,6 +23,10 @@ uniform mat4 modelview_projection_uni;
 in vec3 vertex_attr;
 
 out vec3 position_var;
+out float blue_x_disp;
+out float blue_y_disp;
+out float green_x_disp;
+out float green_y_disp;
 
 void main(void)
 {
@@ -30,8 +34,8 @@ void main(void)
   vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
 
+  // Compensate distortion
   if (true) {
-    // distorsion
     const float scr_radius = 1.8;
     const float dis_k1 = -0.32; // Manual calibration
     const float dis_k2 = 0.015;
@@ -52,4 +56,14 @@ void main(void)
 
     gl_Position = scr_pos * distorsion;
   }
+
+  // Compensate chromatic abberation
+  float blue_y = -0.015; // 1.0192
+  float blue_x = -0.01; // 1.0224
+  float green_y = -0.005; // 1.0078
+  float green_x = -0.004; // 1.0091
+  blue_x_disp = gl_Position.x / gl_Position.z * blue_x;
+  blue_y_disp = gl_Position.y / gl_Position.z * blue_y;
+  green_x_disp = gl_Position.x / gl_Position.z * green_x;
+  green_y_disp = gl_Position.y / gl_Position.z * green_y;
 }
