@@ -277,10 +277,12 @@ QVector3D HMDWidget::ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3
 
 void HMDWidget::UpdateTexture()
 {
-	if(!video_player->GetVideoData())
+  auto video_data = video_player->GetCurrentData();
+  if (!video_data) {
 		return;
+  }
 
-	if(video_tex->width() != video_player->GetWidth() || video_tex->height() != video_player->GetHeight())
+  if(video_tex->width() != video_data->GetWidth() || video_tex->height() != video_data->GetHeight())
 	{
 		if(video_tex->isStorageAllocated())
 		{
@@ -288,13 +290,13 @@ void HMDWidget::UpdateTexture()
 			video_tex->create();
 		}
 		video_tex->setFormat(QOpenGLTexture::RGB8_UNorm);
-		video_tex->setSize(video_player->GetWidth(), video_player->GetHeight());
+    video_tex->setSize(video_data->GetWidth(), video_data->GetHeight());
 		video_tex->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
     video_tex->allocateStorage(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8);
 	}
 
 	video_tex->bind();
-  video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_player->GetVideoData());
+  video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_data->GetData());
 }
 
 void HMDWidget::RenderEye(int eye)

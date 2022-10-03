@@ -19,10 +19,39 @@
 #ifndef PSVR_VIDEOPLAYER_H
 #define PSVR_VIDEOPLAYER_H
 
+#include <memory>
+#include <mutex>
+
 #include <QObject>
 #include <QMutex>
 
 #include <vlc/vlc.h>
+
+/*! Information about pixel data */
+class VideoDataInfo {
+ public:
+  VideoDataInfo(unsigned int width, unsigned int height) {
+    width_ = width;
+    height_ = height;
+    data_.resize(width_ * height_ * 3);
+  }
+
+  unsigned char* GetData() { return data_.data(); }
+  unsigned int GetWidth() { return width_; }
+  unsigned int GetHeight() { return height_; }
+
+ private:
+  VideoDataInfo() = delete;
+  VideoDataInfo(const VideoDataInfo&) = delete;
+  VideoDataInfo& operator=(const VideoDataInfo&) = delete;
+
+  unsigned int width_;
+  unsigned int height_;
+  std::vector<unsigned char> data_;
+};
+
+using VideoDataInfoPtr = std::shared_ptr<VideoDataInfo>;
+
 
 class VideoPlayer : public QObject
 {
@@ -36,9 +65,9 @@ class VideoPlayer : public QObject
 		libvlc_media_player_t *media_player;
 		libvlc_event_manager_t *event_manager;
 
-		unsigned int width, height;
-		unsigned char *video_data;
-		QMutex data_mutex;
+    VideoDataInfoPtr current_data_; // Current data for playing
+    std::mutex current_data_lock_; // Lock for current_data_ only
+    VideoDataInfoPtr vlc_locked_data_; // Data, locked by vlc player. Set new value in vlc callback only
 
 		void UnloadVideo();
     void OnParsed();
@@ -56,12 +85,6 @@ class VideoPlayer : public QObject
 
 		bool IsPlaying();
 
-		unsigned char *GetVideoData()		{ return video_data; }
-		unsigned int GetWidth()				{ return width; }
-		unsigned int GetHeight()			{ return height; }
-
-		void LockVideoData()				{ data_mutex.lock(); }
-		void UnlockVideoData()				{ data_mutex.unlock(); }
 
 		void *VLC_Lock(void **p_pixels);
 		void VLC_Unlock(void *id, void *const *p_pixels);
@@ -71,6 +94,10 @@ class VideoPlayer : public QObject
 		void VLC_Cleanup();
 
 		void VLC_Event(const struct libvlc_event_t *event);
+
+    void SetCurrentData(VideoDataInfoPtr d);
+    VideoDataInfoPtr GetCurrentData();
+
 
 	signals:
 		void DisplayVideoFrame();

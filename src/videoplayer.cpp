@@ -62,10 +62,6 @@ static void vlc_event(const struct libvlc_event_t *event, void *data)
 
 VideoPlayer::VideoPlayer(QObject *parent) : QObject(parent)
 {
-	this->width = 0;
-	this->height = 0;
-
-	video_data = 0;
 
 	media = 0;
 	media_player = 0;
@@ -89,7 +85,6 @@ VideoPlayer::~VideoPlayer()
 {
 	UnloadVideo();
 	libvlc_release(libvlc);
-	delete[] video_data;
 }
 
 bool VideoPlayer::LoadVideo(const char *path)
@@ -161,6 +156,16 @@ void VideoPlayer::OnParsed() {
   }
 }
 
+void VideoPlayer::SetCurrentData(VideoDataInfoPtr d) {
+  std::lock_guard<std::mutex> locker(current_data_lock_);
+  current_data_ = d;
+}
+
+VideoDataInfoPtr VideoPlayer::GetCurrentData() {
+  std::lock_guard<std::mutex> locker(current_data_lock_);
+  return current_data_;
+}
+
 void VideoPlayer::Play()
 {
 	if(!media_player)
@@ -198,16 +203,14 @@ bool VideoPlayer::IsPlaying()
 
 void *VideoPlayer::VLC_Lock(void **p_pixels)
 {
-	//printf("lock\n");
-	data_mutex.lock();
-	*p_pixels = video_data;
+  vlc_locked_data_ = GetCurrentData();
+  *p_pixels = vlc_locked_data_->GetData();
 	return 0;
 }
 
 void VideoPlayer::VLC_Unlock(void *id, void *const *p_pixels)
 {
-	//printf("unlock\n");
-	data_mutex.unlock();
+  vlc_locked_data_.reset();
 }
 
 void VideoPlayer::VLC_Display(void *id)
@@ -218,23 +221,17 @@ void VideoPlayer::VLC_Display(void *id)
 
 unsigned int VideoPlayer::VLC_Setup(char *chroma, unsigned int *width, unsigned int *height, unsigned int *pitches, unsigned int *lines)
 {
-	this->width = *width;
-	this->height = *height;
-
+  VideoDataInfoPtr new_data = std::make_shared<VideoDataInfo>(*width, * height);
+  SetCurrentData(new_data);
 	strcpy(chroma, "RV24");
-	*pitches = this->width * 3;
-	*lines = this->height;
-
-	delete[] video_data;
-	video_data = new unsigned char[this->width * this->height * 3];
-
+  *pitches = (*width) * 3;
+  *lines = (*height);
 	return 1;
 }
 
 void VideoPlayer::VLC_Cleanup()
 {
-	delete[] video_data;
-	video_data = 0;
+  SetCurrentData(VideoDataInfoPtr());
 }
 
 void VideoPlayer::VLC_Event(const struct libvlc_event_t *event)
