@@ -19,6 +19,8 @@
 #ifndef PSVR_PSVR_H
 #define PSVR_PSVR_H
 
+#include <mutex>
+
 #include <hidapi/hidapi.h>
 #include <QMatrix4x4>
 
@@ -55,6 +57,21 @@ class PSVR
 
 		QMatrix4x4 GetModelViewMatrix(void)	{ return modelview_matrix; }
 
+ private:
+  // Compensation
+  const double kCompensationSmooth = 0.3;
+  std::chrono::steady_clock::time_point last_reading_; //!< time of last read/rotate operation. Or default value if not valid
+  std::chrono::steady_clock::time_point last_reset_; //!< Time of last reset operation
+  double x_angle_summ;
+  double y_angle_summ;
+  double z_angle_summ;
+
+  // Current angle speed (per milliseconds) for axis (compensation)
+  double dx_angle;
+  double dy_angle;
+  double dz_angle;
+
+  std::mutex angle_lock_;
 };
 
 #endif //PSVR_PSVR_H

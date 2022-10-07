@@ -38,6 +38,9 @@ class PSVRThread : public QThread
 
 	protected:
 		void run() Q_DECL_OVERRIDE;
+
+ private:
+  const int kReadIntervalMcs = 1000;
 };
 
 #endif //PSVR_PSVR_TASK_H

@@ -33,8 +33,11 @@ void PSVRThread::run()
 {
 	while(!isInterruptionRequested())
 	{
-		if(psvr->Read(1))
+    if(psvr->Read(-1)) {
 			emit PSVRUpdate();
+    }
+
+    std::this_thread::sleep_for(std::chrono::microseconds(kReadIntervalMcs));
 	}
 
 	psvr->Close();

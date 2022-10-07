@@ -34,11 +34,10 @@ int16_t read_int16(unsigned char *buffer, int offset);
 
 #define ACCELERATION_COEF 0.00003125f
 
-PSVR::PSVR()
-{
+PSVR::PSVR(): x_angle_summ(0.0), y_angle_summ(0.0), z_angle_summ(0.0),
+    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0) {
 	psvr_device = 0;
 	memset(buffer, 0, sizeof(buffer));
-
 	modelview_matrix.setToIdentity();
 }
 
@@ -101,30 +100,66 @@ bool PSVR::Read(int timeout)
 		return false;
 
 	int size = hid_read_timeout(psvr_device, buffer, PSVR_BUFFER_SIZE, timeout);
+  auto ct = std::chrono::steady_clock::now();
 	
-	if(size == 64)
-	{
-		x_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
-		y_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
-		z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
+  if(size != 64) {
+    // printf("read failed \"%S\"\n", hid_error(psvr_device));
+    return false;
+  }
 
-		modelview_matrix.rotate(-y_acc * ACCELERATION_COEF, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
-		modelview_matrix.rotate(-x_acc * ACCELERATION_COEF, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
-		modelview_matrix.rotate(z_acc * ACCELERATION_COEF, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
+  if (last_reading_ == decltype(last_reading_)()) {
+    last_reading_ = ct;
+    ResetView();
+    return true;
+  }
 
-		return true;
-	}
-	else if(size < 0)
-	{
-		printf("read failed \"%S\"\n", hid_error(psvr_device));
-	}
+  double ims = std::chrono::duration_cast<std::chrono::microseconds>
+      (ct - last_reading_).count() * 0.001;
+  last_reading_ = ct;
 
-	return false;
+  x_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
+  y_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
+  z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
+
+  std::unique_lock<std::mutex> locker(angle_lock_);
+  double x_angle = (-x_acc * ACCELERATION_COEF - dx_angle) * ims;
+  double y_angle = (-y_acc * ACCELERATION_COEF - dy_angle) * ims;
+  double z_angle = (z_acc * ACCELERATION_COEF - dz_angle) * ims;
+  x_angle_summ += x_angle;
+  y_angle_summ += y_angle;
+  z_angle_summ += z_angle;
+  locker.unlock();
+
+  modelview_matrix.rotate(y_angle, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
+  modelview_matrix.rotate(x_angle, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
+  modelview_matrix.rotate(z_angle, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
+
+  return true;
 }
 
 void PSVR::ResetView()
 {
-	modelview_matrix.setToIdentity();
+  modelview_matrix.setToIdentity();
+
+  auto ct = std::chrono::steady_clock::now();
+  if (last_reset_ == decltype(last_reset_)()) {
+    last_reset_ = ct;
+    return;
+  }
+
+  double ims = std::chrono::duration_cast<std::chrono::microseconds>
+      (ct - last_reset_).count() * 0.001;
+  last_reset_ = ct;
+
+  std::unique_lock<std::mutex> locker(angle_lock_);
+  printf("xan: %.1f, yan: %.1f, zan: %.1f\n", x_angle_summ, y_angle_summ, z_angle_summ);
+  dx_angle += x_angle_summ / ims * kCompensationSmooth;
+  dy_angle += y_angle_summ / ims * kCompensationSmooth;
+  dz_angle += z_angle_summ / ims * kCompensationSmooth;
+  x_angle_summ = 0.0;
+  y_angle_summ = 0.0;
+  z_angle_summ = 0.0;
+  locker.unlock();
 }
 
 int16_t read_int16(unsigned char *buffer, int offset)
