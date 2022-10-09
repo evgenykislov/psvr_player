@@ -20,16 +20,19 @@
 #define PSVR_PSVR_H
 
 #include <mutex>
+#include <thread>
 
 #include <hidapi/hidapi.h>
 #include <QMatrix4x4>
 
 #define PSVR_BUFFER_SIZE 64
 
-class PSVR
+class PsvrSensors: public QObject
 {
+  Q_OBJECT
+
 	private:
-		hid_device *psvr_device;
+    hid_device* device_;
 
 		unsigned char buffer[PSVR_BUFFER_SIZE];
 		short x_acc, y_acc, z_acc;
@@ -37,15 +40,15 @@ class PSVR
 		QMatrix4x4 modelview_matrix;
 
 	public:
-		PSVR();
-		~PSVR();
+    PsvrSensors();
+    ~PsvrSensors();
 
 		static hid_device_info *EnumerateDevices();
 
-		bool Open(const char *path = 0);
-		void Close();
+    bool OpenDevice();
+    void CloseDevice();
 
-		bool IsOpen()					{ return psvr_device != 0; }
+    bool IsOpen()					{ return device_ != 0; }
 
 		bool Read(int timeout);
 
@@ -55,13 +58,27 @@ class PSVR
 		short GetAccelerationY(void)	{ return y_acc; }
 		short GetAccelerationZ(void)	{ return z_acc; }
 
-		QMatrix4x4 GetModelViewMatrix(void)	{ return modelview_matrix; }
+    void GetModelViewMatrix(QMatrix4x4& matrix);
+
+    void StartCalibration();
+    void CancelCalibration();
+    bool IsCalibrationCompleted();
+
+ signals:
+  void SensorUpdate();
 
  private:
+  const int kReadIntervalMcs = 500;
+  const int kReadTimeoutMs = 1; //!< Timeout for reading sensors from hid device. Using "-1" can cause hangup.
+  const unsigned short kPsvrVendorID = 0x054c;
+  const unsigned short kPsvrProductID = 0x09af;
+  const char kPsvrSensorInterface[4] = ":04";
+  const int kCalibrationInterval = 10000;
+
   // Compensation
   const double kCompensationSmooth = 0.3;
   std::chrono::steady_clock::time_point last_reading_; //!< time of last read/rotate operation. Or default value if not valid
-  std::chrono::steady_clock::time_point last_reset_; //!< Time of last reset operation
+  std::chrono::steady_clock::time_point calibration_start_; //!< Time of last reset operation
   double x_angle_summ;
   double y_angle_summ;
   double z_angle_summ;
@@ -72,6 +89,13 @@ class PSVR
   double dz_angle;
 
   std::mutex angle_lock_;
+  std::mutex matrix_lock_;
+
+  std::thread read_thr_;
+  std::atomic_bool run_reading_;
+
+  std::string GetSensorDevice();
+
 };
 
 #endif //PSVR_PSVR_H

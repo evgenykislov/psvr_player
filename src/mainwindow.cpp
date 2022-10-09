@@ -25,17 +25,16 @@
 #include "hmdwindow.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "../rotatecalibrationdlg.h"
 
 #include "project_version.h"
 
-MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
-    PSVRThread *psvr_thread, QWidget *parent):
+MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
     current_play_position_(0)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
-	this->psvr_thread = psvr_thread;
 
 	hmd_window = 0;
 	hid_device_infos = 0;
@@ -52,7 +51,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
 	player_position_delay_timer.setSingleShot(true);
 	connect(&player_position_delay_timer, SIGNAL(timeout()), this, SLOT(UIPlayerPositionChangedDelayed()));
 
-	connect(psvr_thread, SIGNAL(PSVRUpdate()), this, SLOT(PSVRUpdate()));
+  connect(psvr, SIGNAL(SensorUpdate()), this, SLOT(PSVRUpdate()));
 
 	connect(video_player, SIGNAL(PositionChanged(float)), this, SLOT(PlayerPositionChanged(float)));
 	connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
@@ -60,9 +59,6 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
   connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()));
   connect(video_player, SIGNAL(DurationParsed(unsigned int)), this,
       SLOT(PlayerDurationParsed(unsigned int)), Qt::QueuedConnection);
-
-	connect(ui->RefreshHIDDevicesButton, SIGNAL(clicked()), this, SLOT(RefreshHIDDevices()));
-	connect(ui->ConnectHIDDeviceButton, SIGNAL(clicked()), this, SLOT(ConnectPSVR()));
 
 	connect(ui->OpenButton, SIGNAL(clicked()), this, SLOT(OpenVideoFile()));
 
@@ -93,7 +89,12 @@ MainWindow::MainWindow(VideoPlayer *video_player, PSVR *psvr,
 
 	connect(ui->RGBWorkaroundCheckBox, SIGNAL(toggled(bool)), this, SLOT(SetRGBWorkaround(bool)));
 
-	RefreshHIDDevices();
+  connect(&update_timer_, SIGNAL(timeout()), this, SLOT(UpdateTimer()), Qt::QueuedConnection);
+
+  update_timer_.setInterval(std::chrono::milliseconds(kUpdateSensorsInterval));
+  update_timer_.start();
+
+  ShowHelmetState();
 }
 
 MainWindow::~MainWindow()
@@ -153,69 +154,6 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 
 }
 
-void MainWindow::RefreshHIDDevices()
-{
-	if(hid_device_infos)
-		hid_free_enumeration(hid_device_infos);
-
-	hid_device_infos = PSVR::EnumerateDevices();
-
-	QStringList items;
-	for(struct hid_device_info *dev = hid_device_infos; dev; dev=dev->next)
-	{
-		QString s;		
-		QTextStream(&s) << QString::fromWCharArray(dev->manufacturer_string) << " "
-						<< QString::fromWCharArray(dev->product_string)
-						<< " (" << QString::fromLocal8Bit(dev->path) << ")";
-		items.append(s);
-	}
-
-	ui->HIDDevicesListWidget->clear();
-	ui->HIDDevicesListWidget->addItems(items);
-}
-
-void MainWindow::ConnectPSVR()
-{
-	if(psvr_thread->isRunning())
-	{
-		psvr_thread->requestInterruption();
-		psvr_thread->wait();
-		ui->ConnectHIDDeviceButton->setText(tr("Connect"));
-		return;
-	}
-
-	int index = ui->HIDDevicesListWidget->currentRow();
-	if(index < 0)
-		return;
-
-	hid_device_info *dev = hid_device_infos;
-	for(int i = 0; i < index; i++)
-	{
-		if(!dev)
-			break;
-		dev = dev->next;
-	}
-
-	if(!dev)
-		return;
-
-	if(psvr->Open(dev->path))
-	{
-    if (!psvr_control_.OpenDevice()) {
-      QMessageBox::critical(this, tr("PSVR Player"), tr("Failed to connect to HID control device."));
-    }
-    else {
-      psvr_control_.SetVRMode(true);
-    }
-
-		psvr_thread->start();
-		ui->ConnectHIDDeviceButton->setText(tr("Disconnect"));
-	}
-	else
-	{
-		QMessageBox::critical(this, tr("PSVR Player"), tr("Failed to connect to HID device."));
-	}
-}
 
 void MainWindow::PSVRUpdate()
 {
@@ -442,7 +380,17 @@ void MainWindow::UpdateVideoProjection()
 
 void MainWindow::SetRGBWorkaround(bool enabled)
 {
-	hmd_window->GetHMDWidget()->SetRGBWorkaround(enabled);
+  hmd_window->GetHMDWidget()->SetRGBWorkaround(enabled);
+}
+
+void MainWindow::UpdateTimer() {
+  if (!psvr->IsOpen()) {
+    psvr->OpenDevice();
+  }
+  if (!psvr_control_.IsOpened()) {
+    psvr_control_.OpenDevice();
+  }
+  ShowHelmetState();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -459,8 +407,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-	psvr_thread->requestInterruption();
-	psvr_thread->wait();
+  psvr->CloseDevice();
 
 	if(hmd_window)
 	{
@@ -484,4 +431,26 @@ QString MainWindow::FormatPlayTime(uint64_t value_ms) {
   QChar fc = QLatin1Char('0');
   return QString("%1:%2:%3.%4").arg(hour, 2, 10, fc).arg(min, 2, 10, fc).\
       arg(sec, 2, 10, fc).arg(ms100, 1, 10, fc);
+}
+
+void MainWindow::ShowHelmetState()
+{
+  QString sst = "Sensors - Failed";
+  QString cst = "Control - Failed";
+  if (psvr->IsOpen()) {
+    sst = "Sensors - OK";
+  }
+  if (psvr_control_.IsOpened()) {
+    cst = "Control - OK";
+  }
+
+  ui->SensorsStateLbl->setText(sst);
+  ui->ControlStateLbl->setText(cst);
+}
+
+void MainWindow::on_CalibrationBtn_clicked() {
+  RotateCalibrationDlg dlg(psvr, this);
+  if (dlg.exec() == QDialog::Accepted) {
+
+  }
 }

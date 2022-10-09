@@ -32,12 +32,12 @@ class HMDWindow : public QMainWindow
 		HMDWidget *hmd_widget;
 
 		VideoPlayer *video_player;
-		PSVR *psvr;
+		PsvrSensors *psvr;
 
 		MainWindow *main_window;
 
 	public:
-		HMDWindow(VideoPlayer *video_player, PSVR *psvr, QWidget *parent = 0);
+		HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
 		~HMDWindow();
 
 		HMDWidget *GetHMDWidget()					{ return hmd_widget; }

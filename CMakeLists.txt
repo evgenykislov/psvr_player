@@ -29,8 +29,6 @@ set(SOURCE_FILES
 		src/mainwindow.cpp
 		src/psvr.cpp
 		include/psvr.h
-		src/psvrthread.cpp
-		include/psvrthread.h
 		src/hmdwindow.cpp
 		include/hmdwindow.h
 		src/hmdwidget.cpp
@@ -40,10 +38,13 @@ set(SOURCE_FILES
                 include/psvr_control.h
                 src/psvr_control.cpp
                 include/key_filter.h
-                src/key_filter.cpp)
+                src/key_filter.cpp
+  rotatecalibrationdlg.h
+  rotatecalibrationdlg.cpp)
 
 set(UI_FILES
-		src/mainwindow.ui)
+                src/mainwindow.ui
+  rotatecalibrationdlg.ui)
 
 set(QRC_FILES
 		resources.qrc)
@@ -56,3 +57,4 @@ add_executable(${PROJECT_NAME} ${UI_FILES} ${SOURCE_FILES}  ${QRC_FILES})
 qt5_use_modules(${PROJECT_NAME} Core Widgets Gui)
 target_link_libraries(${PROJECT_NAME} ${HIDAPI_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${LIBVLC_LIBRARY})
+target_link_libraries(${PROJECT_NAME} pthread)

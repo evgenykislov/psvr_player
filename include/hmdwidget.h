@@ -44,7 +44,7 @@ class HMDWidget : public QOpenGLWidget
 
 	private:
 		VideoPlayer *video_player;
-		PSVR *psvr;
+		PsvrSensors *psvr;
 
 
 		QOpenGLFunctions *gl;
@@ -77,7 +77,7 @@ class HMDWidget : public QOpenGLWidget
 		void RenderEye(int eye);
 
 	public:
-		HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent = 0);
+		HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
 		~HMDWidget();
 
 		float GetFOV()											{ return fov; }

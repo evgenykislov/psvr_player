@@ -23,7 +23,6 @@
 #include <QTimer>
 
 #include "key_filter.h"
-#include "psvrthread.h"
 #include "videoplayer.h"
 #include "psvr.h"
 #include "psvr_control.h"
@@ -44,10 +43,8 @@ class MainWindow : public QMainWindow
 
 		struct hid_device_info *hid_device_infos;
 
-		PSVRThread *psvr_thread;
-
 		VideoPlayer *video_player;
-		PSVR *psvr;
+    PsvrSensors *psvr;
 
 		HMDWindow *hmd_window;
 
@@ -55,15 +52,12 @@ class MainWindow : public QMainWindow
 		QTimer player_position_delay_timer;
 
 	public:
-		MainWindow(VideoPlayer *video_player, PSVR *psvr, PSVRThread *psvr_thread, QWidget *parent = 0);
+    MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
 		~MainWindow();
 
 		void SetHMDWindow(HMDWindow *hmd_window);
 
 	protected slots:
-		void RefreshHIDDevices();
-		void ConnectPSVR();
-
 		void PSVRUpdate();
 		void FOVValueChanged(double v);
 
@@ -92,11 +86,18 @@ class MainWindow : public QMainWindow
 
 		void SetRGBWorkaround(bool enabled);
 
+    void UpdateTimer();
+
 	protected:
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
+private slots:
+    void on_CalibrationBtn_clicked();
+
  private:
+  const int kUpdateSensorsInterval = 2000;
+
   PsvrControl psvr_control_;
 
   KeyFilter key_filter_;
@@ -105,6 +106,10 @@ class MainWindow : public QMainWindow
   QString last_directory_;
 
   QString FormatPlayTime(uint64_t value_ms);
+  void ShowHelmetState();
+
+
+  QTimer update_timer_;
 };
 
 

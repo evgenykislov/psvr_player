@@ -22,7 +22,7 @@
 #include "psvr.h"
 #include "hmdwindow.h"
 
-HMDWindow::HMDWindow(VideoPlayer *video_player, PSVR *psvr, QWidget *parent) : QMainWindow(parent)
+HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent) : QMainWindow(parent)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;

@@ -40,12 +40,11 @@ int main(int argc, char *argv[])
 
 	hid_init();
 
-	PSVR psvr;
-	PSVRThread *psvr_thread = new PSVRThread(&psvr);
+  PsvrSensors psvr;
 
 	VideoPlayer video_player;
 
-	MainWindow main_window(&video_player, &psvr, psvr_thread);
+  MainWindow main_window(&video_player, &psvr);
 	main_window.show();
 
 	HMDWindow hmd_window(&video_player, &psvr);
@@ -62,8 +61,6 @@ int main(int argc, char *argv[])
 	//psvr_thread->start();
 
 	int r = app.exec();
-
-	delete psvr_thread;
 
 	hid_exit();
 

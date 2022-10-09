@@ -34,75 +34,79 @@ int16_t read_int16(unsigned char *buffer, int offset);
 
 #define ACCELERATION_COEF 0.00003125f
 
-PSVR::PSVR(): x_angle_summ(0.0), y_angle_summ(0.0), z_angle_summ(0.0),
-    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0) {
-	psvr_device = 0;
+PsvrSensors::PsvrSensors(): x_angle_summ(0.0), y_angle_summ(0.0), z_angle_summ(0.0),
+    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0), run_reading_(false) {
+  device_ = 0;
 	memset(buffer, 0, sizeof(buffer));
 	modelview_matrix.setToIdentity();
 }
 
-PSVR::~PSVR()
+PsvrSensors::~PsvrSensors()
 {
 }
 
-hid_device_info *PSVR::EnumerateDevices()
+hid_device_info *PsvrSensors::EnumerateDevices()
 {
 	//return hid_enumerate(0x0, 0x0);
 	return hid_enumerate(PSVR_VENDOR_ID, PSVR_PRODUCT_ID);
 }
 
-bool PSVR::Open(const char *path)
-{
-	if(path)
-		psvr_device = hid_open_path(path);
-	else
-		psvr_device = hid_open(PSVR_VENDOR_ID, PSVR_PRODUCT_ID, 0);
+bool PsvrSensors::OpenDevice() {
+  CloseDevice();
+  assert(!device_);
 
-	if(!psvr_device)
-	{
-		fprintf(stderr, "Failed to open PSVR HID device.\n");
-		return false;
-	}
+  auto dev_name = GetSensorDevice();
+  if (dev_name.empty()) {
+    return false;
+  }
 
-	/*int r;
-	wchar_t wstr[MAX_STR];
+  device_ = hid_open_path(dev_name.c_str());
+  if (!device_) {
+    return false;
+  }
 
-	r = hid_get_manufacturer_string(psvr_device, wstr, MAX_STR);
-	if(r > 0)
-		printf("Manufacturer: %ls\n", wstr);
+  run_reading_ = true;
+  std::thread rthr([this](){
+    while (run_reading_) {
+      if (Read(kReadTimeoutMs)) {
+        emit SensorUpdate();
+      }
 
-	r = hid_get_product_string(psvr_device, wstr, MAX_STR);
-	if(r > 0)
-		printf("Product: %ls\n", wstr);
+      std::this_thread::sleep_for(std::chrono::microseconds(kReadIntervalMcs));
 
-	r = hid_get_serial_number_string(psvr_device, wstr, MAX_STR);
-	if(r > 0)
-		printf("SN: %ls\n", wstr);*/
+    }
+  });
 
-	//hid_set_nonblocking(psvr_device, 1);
+  std::swap(read_thr_, rthr);
 
-	return true;
+  return true;
 }
 
 
-void PSVR::Close()
+void PsvrSensors::CloseDevice()
 {
-	if(!psvr_device)
+  if (read_thr_.joinable()) {
+    run_reading_ = false;
+    read_thr_.join();
+  }
+
+  if(!device_)
 		return;
 
-	hid_close(psvr_device);
-	psvr_device = 0;
+  hid_close(device_);
+  device_ = 0;
 }
 
-bool PSVR::Read(int timeout)
+bool PsvrSensors::Read(int timeout)
 {
-	if(!psvr_device)
+  if(!device_)
 		return false;
 
-	int size = hid_read_timeout(psvr_device, buffer, PSVR_BUFFER_SIZE, timeout);
+  int size = hid_read_timeout(device_, buffer, PSVR_BUFFER_SIZE, timeout);
   auto ct = std::chrono::steady_clock::now();
 	
   if(size != 64) {
+    // Device is switched off
     // printf("read failed \"%S\"\n", hid_error(psvr_device));
     return false;
   }
@@ -117,49 +121,107 @@ bool PSVR::Read(int timeout)
       (ct - last_reading_).count() * 0.001;
   last_reading_ = ct;
 
+  // printf("Read sensors in interval %.1f\n", ims);
+
   x_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
   y_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
   z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
 
-  std::unique_lock<std::mutex> locker(angle_lock_);
+  std::unique_lock<std::mutex> alocker(angle_lock_);
   double x_angle = (-x_acc * ACCELERATION_COEF - dx_angle) * ims;
   double y_angle = (-y_acc * ACCELERATION_COEF - dy_angle) * ims;
   double z_angle = (z_acc * ACCELERATION_COEF - dz_angle) * ims;
   x_angle_summ += x_angle;
   y_angle_summ += y_angle;
   z_angle_summ += z_angle;
-  locker.unlock();
+  alocker.unlock();
 
+  std::unique_lock<std::mutex> mlocker(matrix_lock_);
   modelview_matrix.rotate(y_angle, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
   modelview_matrix.rotate(x_angle, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
   modelview_matrix.rotate(z_angle, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
+  mlocker.unlock();
 
   return true;
 }
 
-void PSVR::ResetView()
+void PsvrSensors::ResetView()
 {
+  std::lock_guard<std::mutex> locker(matrix_lock_);
   modelview_matrix.setToIdentity();
+}
 
-  auto ct = std::chrono::steady_clock::now();
-  if (last_reset_ == decltype(last_reset_)()) {
-    last_reset_ = ct;
-    return;
-  }
+void PsvrSensors::GetModelViewMatrix(QMatrix4x4& matrix) {
+  std::lock_guard<std::mutex> locker(matrix_lock_);
+  matrix = modelview_matrix;
+}
 
-  double ims = std::chrono::duration_cast<std::chrono::microseconds>
-      (ct - last_reset_).count() * 0.001;
-  last_reset_ = ct;
-
+void PsvrSensors::StartCalibration() {
   std::unique_lock<std::mutex> locker(angle_lock_);
-  printf("xan: %.1f, yan: %.1f, zan: %.1f\n", x_angle_summ, y_angle_summ, z_angle_summ);
-  dx_angle += x_angle_summ / ims * kCompensationSmooth;
-  dy_angle += y_angle_summ / ims * kCompensationSmooth;
-  dz_angle += z_angle_summ / ims * kCompensationSmooth;
+  dx_angle = 0.0;
+  dy_angle = 0.0;
+  dz_angle = 0.0;
   x_angle_summ = 0.0;
   y_angle_summ = 0.0;
   z_angle_summ = 0.0;
   locker.unlock();
+  calibration_start_ = std::chrono::steady_clock::now();
+}
+
+void PsvrSensors::CancelCalibration()
+{
+  calibration_start_ = decltype(calibration_start_)();
+}
+
+bool PsvrSensors::IsCalibrationCompleted()
+{
+  if (calibration_start_ == decltype(calibration_start_)()) {
+    // There isn't any calibration. Inform about completion
+    return true;
+  }
+
+  auto ct = std::chrono::steady_clock::now();
+
+  double ims = std::chrono::duration_cast<std::chrono::microseconds>
+      (ct - calibration_start_).count() * 0.001;
+  if (ims < kCalibrationInterval) {
+    return false;
+  }
+
+  std::unique_lock<std::mutex> locker(angle_lock_);
+  dx_angle = x_angle_summ / ims;
+  dy_angle = y_angle_summ / ims;
+  dz_angle = z_angle_summ / ims;
+  x_angle_summ = 0.0;
+  y_angle_summ = 0.0;
+  z_angle_summ = 0.0;
+  locker.unlock();
+
+  return true;
+}
+
+std::string PsvrSensors::GetSensorDevice() {
+  auto devs = hid_enumerate(kPsvrVendorID, kPsvrProductID);
+  if (!devs) {
+    return std::string();
+  }
+
+  std::string res;
+  for (auto dev = devs; dev; dev = dev->next) {
+    try {
+      std::string p = dev->path;
+      if (p.substr(p.length() - 3) == kPsvrSensorInterface) {
+        res = p;
+        break;
+      }
+    }
+    catch (std::bad_alloc&) {}
+    catch (std::out_of_range& ) {}
+  }
+
+  hid_free_enumeration(devs);
+
+  return res;
 }
 
 int16_t read_int16(unsigned char *buffer, int offset)

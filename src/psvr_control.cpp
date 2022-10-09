@@ -29,6 +29,7 @@ PsvrControl::PsvrControl(): device_(nullptr) {
 
 }
 
+
 std::string PsvrControl::GetControlDevice() {
   auto devs = hid_enumerate(kPsvrVendorID, kPsvrProductID);
   if (!devs) {

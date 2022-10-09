@@ -18,7 +18,7 @@
 
 #include "hmdwidget.h"
 
-HMDWidget::HMDWidget(VideoPlayer *video_player, PSVR *psvr, QWidget *parent):
+HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
   QOpenGLWidget(parent), cylinder_screen_(false)
 {
 	this->video_player = video_player;
@@ -315,7 +315,7 @@ void HMDWidget::RenderEye(int eye)
 	sphere_shader->bind();
 
 	QMatrix4x4 modelview_matrix;
-	modelview_matrix = psvr->GetModelViewMatrix();
+  psvr->GetModelViewMatrix(modelview_matrix);
 
 	QMatrix4x4 projection_matrix;
 	projection_matrix.perspective(fov, ((float)(w/2)) / (float)h, 0.1f, 100.0f);
