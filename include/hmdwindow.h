@@ -44,7 +44,8 @@ class HMDWindow : public QMainWindow
 
 		void SetMainWindow(MainWindow *main_window)	{ this->main_window = main_window; }
 
-    void SwitchFullScreen();
+    void SwitchFullScreen(bool makefull);
+    void ChangeFullScreen();
 
 	protected:
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;

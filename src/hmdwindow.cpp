@@ -42,13 +42,19 @@ HMDWindow::~HMDWindow()
 	delete hmd_widget;
 }
 
-void HMDWindow::SwitchFullScreen() {
-  if (isFullScreen()) {
-    showNormal();
+void HMDWindow::SwitchFullScreen(bool makefull) {
+  if (makefull) {
+    showFullScreen();
+    setCursor(Qt::BlankCursor);
   }
   else {
-    showFullScreen();
+    showNormal();
+    unsetCursor();
   }
+}
+
+void HMDWindow::ChangeFullScreen() {
+  SwitchFullScreen(!isFullScreen());
 }
 
 void HMDWindow::keyPressEvent(QKeyEvent *event)
@@ -59,10 +65,7 @@ void HMDWindow::keyPressEvent(QKeyEvent *event)
 			psvr->ResetView();
 			break;
 		case Qt::Key_F11:
-			if(this->isFullScreen())
-				showNormal();
-			else
-				showFullScreen();
+      ChangeFullScreen();
 			break;
 		default:
 			QMainWindow::keyPressEvent(event);
