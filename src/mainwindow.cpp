@@ -307,11 +307,16 @@ void MainWindow::UIPlayerPositionChangedDelayed()
 void MainWindow::UIPlayerMakeStep(int move_ms) {
   float pos = 0.0f;
 
+
   if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
     // Goto start
   }
-  else if (media_duration_ == 0) {
+  else if (media_duration_ <= kBeforeEndInterval) {
     // Use default value
+  }
+  else if (current_play_position_ + move_ms > (media_duration_ - kBeforeEndInterval)) {
+    // Stay to before-end position
+    pos = static_cast<float>(media_duration_ - kBeforeEndInterval) / media_duration_;
   }
   else {
     pos = static_cast<float>(current_play_position_ + move_ms) / media_duration_;

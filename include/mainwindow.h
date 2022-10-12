@@ -97,6 +97,7 @@ private slots:
 
  private:
   const int kUpdateSensorsInterval = 2000;
+  const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
 
   PsvrControl psvr_control_;
 
