@@ -105,6 +105,7 @@ private slots:
   uint64_t media_duration_; // in ms
   uint64_t current_play_position_; // in ms
   QString last_directory_;
+  QString last_file_;
 
   QString FormatPlayTime(uint64_t value_ms);
   void ShowHelmetState();

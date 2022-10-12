@@ -174,9 +174,12 @@ void MainWindow::ResetView()
 void MainWindow::OpenVideoFile()
 {
   QString file;
-  QFileDialog dlg(this, tr("Open Video"), last_directory_, tr("All files (*)"));
+  QFileDialog dlg(this, tr("Open movie"), last_directory_, tr("All files (*)"));
   dlg.setOptions(QFileDialog::DontUseNativeDialog);
   dlg.setFileMode(QFileDialog::ExistingFile);
+  if (!last_file_.isEmpty()) {
+    dlg.selectFile(last_file_);
+  }
   if (dlg.exec()) {
     last_directory_ = dlg.directory().path();
     auto fl = dlg.selectedFiles();
@@ -195,6 +198,7 @@ void MainWindow::OpenVideoFile()
 		return;
 	}
 
+  last_file_ = file;
 	ui->PlayerControlsWidget->setEnabled(true);
 }
 
