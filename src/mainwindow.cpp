@@ -31,7 +31,7 @@
 
 MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
-    current_play_position_(0)
+    current_play_position_(0), play_sc_(nullptr), play_mode_(false)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -41,8 +41,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 
 	ui->setupUi(this);
 
-  installEventFilter(&key_filter_);
-  grabKeyboard();
+//  grabKeyboard();
 
 	setWindowTitle(windowTitle() + " " + QString(PROJECT_VERSION));
   last_directory_ = QDir::currentPath();
@@ -54,9 +53,9 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   connect(psvr, SIGNAL(SensorUpdate()), this, SLOT(PSVRUpdate()));
 
 	connect(video_player, SIGNAL(PositionChanged(float)), this, SLOT(PlayerPositionChanged(float)));
-	connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
+  connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()), Qt::QueuedConnection);
 	connect(video_player, SIGNAL(Paused()), this, SLOT(PlayerPaused()));
-  connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()));
+  connect(video_player, SIGNAL(Stopped()), this, SLOT(PlayerStopped()), Qt::QueuedConnection);
   connect(video_player, SIGNAL(DurationParsed(unsigned int)), this,
       SLOT(PlayerDurationParsed(unsigned int)), Qt::QueuedConnection);
 
@@ -71,6 +70,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(FullScreen()), this, SLOT(UIPlayerFullScreen()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(Stop()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(ChangeEyesDistance(int)), this, SLOT(EyesDistanceChange(int)), Qt::QueuedConnection);
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
@@ -89,19 +89,26 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 
 	connect(ui->RGBWorkaroundCheckBox, SIGNAL(toggled(bool)), this, SLOT(SetRGBWorkaround(bool)));
 
+  connect(ui->eyes_distance_edt, SIGNAL(textEdited(QString)), this, SLOT(on_eyes_distance_edt_textChanged(QString)));
+
   connect(&update_timer_, SIGNAL(timeout()), this, SLOT(UpdateTimer()), Qt::QueuedConnection);
 
   update_timer_.setInterval(std::chrono::milliseconds(kUpdateSensorsInterval));
   update_timer_.start();
+
+  try {
+    play_sc_ = new QShortcut(this);
+    play_sc_->setKey(Qt::CTRL + Qt::Key_Space);
+    connect(play_sc_, SIGNAL(activated()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
+  }
+  catch (std::bad_alloc&) {
+  }
 
   ShowHelmetState();
 }
 
 MainWindow::~MainWindow()
 {
-  releaseKeyboard();
-  removeEventFilter(&key_filter_);
-
 	delete ui;
 
 	if(hid_device_infos)
@@ -110,10 +117,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 {
-	this->hmd_window = hmd_window;
+  if (!hmd_window) {
+    this->hmd_window->disconnect(this);
+    this->hmd_window =nullptr;
+    return;
+  }
 
-	if(!hmd_window)
-		return;
+	this->hmd_window = hmd_window;
 		
 	ui->FOVDoubleSpinBox->setValue(hmd_window->GetHMDWidget()->GetFOV());
 
@@ -152,6 +162,8 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 			break;
 	}
 
+  connect(hmd_window, SIGNAL(Play()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
+
 }
 
 
@@ -163,7 +175,20 @@ void MainWindow::PSVRUpdate()
 void MainWindow::FOVValueChanged(double v)
 {
 	if(hmd_window)
-		hmd_window->GetHMDWidget()->SetFOV((float)v);
+    hmd_window->GetHMDWidget()->SetFOV((float)v);
+}
+
+void MainWindow::EyesDistanceChange(int incr)
+{
+  bool ok;
+  auto val = ui->eyes_distance_edt->text().toInt(&ok);
+  if (!ok) {
+    val = 0;
+  }
+
+  val += incr;
+  ui->eyes_distance_edt->setText(QString("%1").arg(val));
+  UpdateEyesDistance(val);
 }
 
 void MainWindow::ResetView()
@@ -258,6 +283,12 @@ void MainWindow::PlayerPlaying()
 
 	ui->StopButton->setEnabled(true);
 	ui->PlayButton->setText(tr("Pause"));
+
+  if (!play_mode_) {
+    installEventFilter(&key_filter_);
+    grabKeyboard();
+    play_mode_ = true;
+  }
 }
 
 void MainWindow::PlayerPaused()
@@ -267,6 +298,12 @@ void MainWindow::PlayerPaused()
 
 void MainWindow::PlayerStopped()
 {
+  if (play_mode_) {
+    play_mode_ = false;
+    releaseKeyboard();
+    removeEventFilter(&key_filter_);
+  }
+
 	ui->StopButton->setEnabled(false);
 	ui->PlayerSlider->setValue(0);
 	ui->PlayButton->setText(tr("Play"));
@@ -296,7 +333,6 @@ void MainWindow::PlayerDurationParsed(unsigned int dur_ms) {
   media_duration_ = dur_ms;
   ui->DurationLabel->setText(QString("/ ") + FormatPlayTime(media_duration_));
 }
-
 
 void MainWindow::UIPlayerPositionChangedDelayed()
 {
@@ -404,14 +440,14 @@ void MainWindow::UpdateTimer() {
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-	if(event->key() == Qt::Key_R)
-	{
-		psvr->ResetView();
-	}
-	else
-	{
-		QMainWindow::keyPressEvent(event);
-	}
+  auto key = event->key();
+  switch (key) {
+    case Qt::Key_R:
+      psvr->ResetView();
+      break;
+    default:
+      QMainWindow::keyPressEvent(event);
+  }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -457,9 +493,23 @@ void MainWindow::ShowHelmetState()
   ui->ControlStateLbl->setText(cst);
 }
 
+void MainWindow::UpdateEyesDistance(int distance)
+{
+  hmd_window->GetHMDWidget()->SetEyesDistance(distance);
+}
+
 void MainWindow::on_CalibrationBtn_clicked() {
   RotateCalibrationDlg dlg(psvr, this);
   if (dlg.exec() == QDialog::Accepted) {
 
+  }
+}
+
+void MainWindow::on_eyes_distance_edt_textChanged(const QString &arg1)
+{
+  bool ok;
+  auto val = arg1.toInt(&ok);
+  if (ok) {
+    UpdateEyesDistance(val);
   }
 }

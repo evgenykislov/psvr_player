@@ -21,6 +21,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QShortcut>
 
 #include "key_filter.h"
 #include "videoplayer.h"
@@ -61,6 +62,8 @@ class MainWindow : public QMainWindow
 		void PSVRUpdate();
 		void FOVValueChanged(double v);
 
+    void EyesDistanceChange(int incr);
+
 		void ResetView();
 
 		void OpenVideoFile();
@@ -95,7 +98,9 @@ class MainWindow : public QMainWindow
 private slots:
     void on_CalibrationBtn_clicked();
 
- private:
+    void on_eyes_distance_edt_textChanged(const QString &arg1);
+
+private:
   const int kUpdateSensorsInterval = 2000;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
 
@@ -109,9 +114,12 @@ private slots:
 
   QString FormatPlayTime(uint64_t value_ms);
   void ShowHelmetState();
+  void UpdateEyesDistance(int distance);
 
 
   QTimer update_timer_;
+  QShortcut* play_sc_;
+  bool play_mode_; //!< Flag a movie is playing now
 };
 
 

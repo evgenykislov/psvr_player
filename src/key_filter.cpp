@@ -45,6 +45,9 @@ KeyEvent g_keys[] = {
   {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
   {Qt::Key_Up,    true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
   {Qt::Key_Down,  true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  // Change Eyes distance
+  {Qt::Key_A,     false, false, false, [](KeyFilter* kf){ emit kf->ChangeEyesDistance(-1); }},
+  {Qt::Key_D,     false, false, false, [](KeyFilter* kf){ emit kf->ChangeEyesDistance(1); }},
   // Full screen
   {Qt::Key_F11,   false, false, false, [](KeyFilter* kf){ emit kf->FullScreen(); }}
 };

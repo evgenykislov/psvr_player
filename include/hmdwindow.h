@@ -47,9 +47,18 @@ class HMDWindow : public QMainWindow
     void SwitchFullScreen(bool makefull);
     void ChangeFullScreen();
 
+  signals:
+    void Play();
+
 	protected:
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+
+ private:
+  QShortcut* play_sc_;
+
+ private slots:
+  void ShortcutPlay() { Play(); }
 
 };
 

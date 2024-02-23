@@ -22,7 +22,8 @@
 #include "psvr.h"
 #include "hmdwindow.h"
 
-HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent) : QMainWindow(parent)
+HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
+    QMainWindow(parent), play_sc_(nullptr)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -35,6 +36,15 @@ HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 
 	hmd_widget = new HMDWidget(video_player, psvr);
 	setCentralWidget(hmd_widget);
+
+  try {
+    play_sc_ = new QShortcut(this);
+    play_sc_->setKey(Qt::CTRL + Qt::Key_Space);
+    connect(play_sc_, SIGNAL(activated()), this, SLOT(ShortcutPlay()), Qt::QueuedConnection);
+  }
+  catch (std::bad_alloc&) {
+  }
+
 }
 
 HMDWindow::~HMDWindow()
@@ -68,9 +78,7 @@ void HMDWindow::keyPressEvent(QKeyEvent *event)
       ChangeFullScreen();
 			break;
 		default:
-			QMainWindow::keyPressEvent(event);
-			break;
-
+      QMainWindow::keyPressEvent(event);
 	}
 }
 

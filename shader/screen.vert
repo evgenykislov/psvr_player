@@ -1,3 +1,5 @@
+#version 330
+
 /*
  * Created by Evgeny Kislov <dev@evgenykislov.com>
  *
@@ -16,29 +18,12 @@
  *
  */
 
-#ifndef KEY_FILTER_17092022_H
-#define KEY_FILTER_17092022_H
+in vec3 vertex_attr;
+out vec3 position_var;
 
-#include <QObject>
-#include <QEvent>
-
-
-class KeyFilter: public QObject {
-  Q_OBJECT
-
- public:
-
-  virtual bool eventFilter(QObject*, QEvent* event) override;
-
- signals:
-   void Pause();
-   void Stop();
-   void MakeStep(int move_ms);
-   void ResetView();
-   void FullScreen();
-   void ChangeEyesDistance(int incr);
-};
-
-
-
-#endif // KEY_FILTER_H
+void main(void)
+{
+  position_var = vertex_attr;
+  gl_Position.xyz = vertex_attr;
+  gl_Position.w = 1.0;
+}

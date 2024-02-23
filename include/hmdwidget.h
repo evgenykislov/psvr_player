@@ -49,18 +49,17 @@ class HMDWidget : public QOpenGLWidget
 
 		QOpenGLFunctions *gl;
 
+    // Sphere shader for movie transformation
 		QOpenGLShaderProgram *sphere_shader;
-		QOpenGLShaderProgram *distortion_shader;
+    QOpenGLBuffer cube_vbo;
+    QOpenGLVertexArrayObject cube_vao;
+    QOpenGLTexture *video_tex; //!< Texture with current shot
+    QOpenGLFramebufferObject* sphere_fbo; //!< Buffer for movie painting
 
-		QOpenGLBuffer cube_vbo;
-		QOpenGLVertexArrayObject cube_vao;
-
-		QOpenGLTexture *video_tex;
-
-
-		/*QOpenGLBuffer screen_vbo;
+    // Screen shader for distortion, 2d painting etc
+    QOpenGLShaderProgram *screen_shader;
+    QOpenGLBuffer screen_vbo;
 		QOpenGLVertexArrayObject screen_vao;
-		QOpenGLFramebufferObject *fbo;*/
 
 		float fov;
 		float barrel_power;
@@ -72,7 +71,7 @@ class HMDWidget : public QOpenGLWidget
 		bool rgb_workaround;
     bool cylinder_screen_;
 
-		//void CreateFBO(int width, int height);
+    void CreateSphereFbo(int width, int height);
 		void UpdateTexture();
 		void RenderEye(int eye);
 
@@ -96,6 +95,8 @@ class HMDWidget : public QOpenGLWidget
 
 		void SetRGBWorkaround(bool enabled)						{ this->rgb_workaround = enabled; }
 
+    void SetEyesDistance(int distance) { view_distance_ = distance; }
+
 	protected:
 		void initializeGL() Q_DECL_OVERRIDE;
 		void resizeGL(int w, int h) Q_DECL_OVERRIDE;
@@ -104,6 +105,8 @@ class HMDWidget : public QOpenGLWidget
  private:
   static const size_t kTriangleFactor = 32;
   std::vector<QVector3D> cube_vertices_;
+  std::atomic<float> play_position_;
+  std::atomic<int> view_distance_;
 
 
   void GenerateCubeVertices();
@@ -111,6 +114,8 @@ class HMDWidget : public QOpenGLWidget
   void AddSquareToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4);
   QVector3D ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4, float f1, float f2);
 
+ private slots:
+  void PlayerPositionChanged(float pos);
 };
 
 

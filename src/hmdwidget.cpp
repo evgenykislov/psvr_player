@@ -19,16 +19,18 @@
 #include "hmdwidget.h"
 
 HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
-  QOpenGLWidget(parent), cylinder_screen_(false)
+    QOpenGLWidget(parent), sphere_fbo(nullptr), screen_shader(nullptr),
+    cylinder_screen_(false), play_position_(0.0f), view_distance_(0)
 {
-	this->video_player = video_player;
+  this->video_player = video_player;
+
+  connect(this->video_player, SIGNAL(PositionChanged(float)), this, SLOT(PlayerPositionChanged(float)));
+
 	this->psvr = psvr;
 
 	gl = 0;
-	//fbo = 0;
 
 	sphere_shader = 0;
-	distortion_shader = 0;
 	video_tex = 0;
 
 	fov = 80.0f;
@@ -45,7 +47,7 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 HMDWidget::~HMDWidget()
 {
 	delete video_tex;
-  //delete fbo;
+  delete sphere_fbo;
 }
 
 void HMDWidget::SetCylinderScreen(bool value) {
@@ -152,39 +154,38 @@ void HMDWidget::initializeGL()
   video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, (const void *)data);
 
 
-	/*distortion_shader = new QOpenGLShaderProgram(this);
-	distortion_shader->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shader/distortion.vert");
-	distortion_shader->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shader/distortion.frag");
-	distortion_shader->link();
-
-	distortion_shader->bind();
-	distortion_shader->bindAttributeLocation("vertex_attr", 0);
-
+  screen_shader = new QOpenGLShaderProgram(this);
+  screen_shader->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shader/screen.vert");
+  screen_shader->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shader/screen.frag");
+  screen_shader->link();
+  screen_shader->bind();
+  screen_shader->bindAttributeLocation("vertex_attr", 0);
 	screen_vbo.create();
 	screen_vbo.bind();
 	screen_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
 	screen_vbo.allocate(screen_vertices, sizeof(screen_vertices));
-
 	screen_vao.create();
 	screen_vao.bind();
-	distortion_shader->enableAttributeArray(0);
-	distortion_shader->setAttributeBuffer(0, GL_FLOAT, 0, 2);
 
-	CreateFBO(width() / 2, height());*/
+  screen_shader->enableAttributeArray(0);
+  screen_shader->setAttributeBuffer(0, GL_FLOAT, 0, 2);
+  screen_shader->release();
+
+  screen_vbo.release();
+  screen_vao.release();
+
+  CreateSphereFbo(width() / 2, height());
 }
 
 
 void HMDWidget::resizeGL(int w, int h)
 {
-	//CreateFBO(w / 2, h);
+  CreateSphereFbo(w / 2, h);
 	update();
 }
 
 void HMDWidget::paintGL()
 {
-	int w = width();
-	int h = height();
-
 	UpdateTexture();
 
 	gl->glClear(GL_COLOR_BUFFER_BIT);
@@ -269,11 +270,11 @@ QVector3D HMDWidget::ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3
 }
 
 
-/*void HMDWidget::CreateFBO(int width, int height)
+void HMDWidget::CreateSphereFbo(int width, int height)
 {
-	delete fbo;
-	fbo = new QOpenGLFramebufferObject(width, height);
-}*/
+  delete sphere_fbo;
+  sphere_fbo = new QOpenGLFramebufferObject(width, height); // TODO new
+}
 
 void HMDWidget::UpdateTexture()
 {
@@ -304,11 +305,13 @@ void HMDWidget::RenderEye(int eye)
 	int w = width();
 	int h = height();
 
-	//fbo->bind();
-	//gl->glViewport(0, 0, w/2, h);
-	//gl->glClear(GL_COLOR_BUFFER_BIT);
+  // Use sphere frame buffer for paiting
+  sphere_fbo->bind();
 
-	gl->glViewport(eye == 1 ? w/2 : 0, 0, w/2, h);
+  gl->glViewport(0, 0, w/2, h);
+  gl->glClear(GL_COLOR_BUFFER_BIT);
+
+//	gl->glViewport(eye == 1 ? w/2 : 0, 0, w/2, h);
 
 
 
@@ -355,20 +358,33 @@ void HMDWidget::RenderEye(int eye)
 
 
 
-/*QOpenGLFramebufferObject::bindDefault();
+  QOpenGLFramebufferObject::bindDefault();
 
-	gl->glViewport(eye == 1 ? w/2 : 0, 0, w/2, h);
+  int leftpoint = int(0 - w/2 * double(view_distance_) / 1000.0);
+  if (eye == 1) {
+    leftpoint = int(w/2 * (1.0 + double(view_distance_) / 1000.0));
+  }
+  gl->glViewport(leftpoint, 0, w/2, h);
 
-	distortion_shader->bind();
-	distortion_shader->setUniformValue("tex_uni", 0);
-	distortion_shader->setUniformValue("barrel_power_uni", barrel_power);
+  screen_shader->bind();
+  screen_shader->setUniformValue("tex_uni", 0);
+  screen_shader->setUniformValue("barrel_power_uni", barrel_power);
+  screen_shader->setUniformValue("show_progress", true);
+  screen_shader->setUniformValue("progress_value", play_position_);
+
 
 	gl->glActiveTexture(GL_TEXTURE0);
-	gl->glBindTexture(GL_TEXTURE_2D, fbo->texture());
+  gl->glBindTexture(GL_TEXTURE_2D, sphere_fbo->texture());
 
 	screen_vao.bind();
 	gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	screen_vao.release();
 
-	distortion_shader->release();*/
+  screen_shader->release();
+}
+
+
+void HMDWidget::PlayerPositionChanged(float pos)
+{
+  play_position_ = pos;
 }

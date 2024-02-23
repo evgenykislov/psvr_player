@@ -254,6 +254,9 @@
            <property name="text">
             <string>Auto full-screen</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
         </layout>
@@ -463,6 +466,20 @@
           <widget class="QPushButton" name="ResetViewButton">
            <property name="text">
             <string>Reset View (R)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Eyes distance</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="eyes_distance_edt">
+           <property name="text">
+            <string>0</string>
            </property>
           </widget>
          </item>
