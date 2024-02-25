@@ -28,6 +28,8 @@
 
 int main(int argc, char *argv[])
 {
+  int result;
+
 	printf("PSVR Player Version %s\n", PROJECT_VERSION);
 
 	QSurfaceFormat format;
@@ -36,34 +38,35 @@ int main(int argc, char *argv[])
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 
-	QApplication app(argc, argv);
+  hid_init();
 
-	hid_init();
+  {
+    QApplication app(argc, argv);
+    PsvrSensors psvr;
 
-  PsvrSensors psvr;
+    VideoPlayer video_player;
 
-	VideoPlayer video_player;
+    MainWindow main_window(&video_player, &psvr);
+    main_window.show();
 
-  MainWindow main_window(&video_player, &psvr);
-	main_window.show();
+    HMDWindow hmd_window(&video_player, &psvr);
+    hmd_window.show();
+    //hmd_window.showFullScreen();
+    //hmd_window.windowHandle()->setScreen(app.screens()[1]);
+    //hmd_window.setGeometry(1920, 0, 1920, 1080);
 
-	HMDWindow hmd_window(&video_player, &psvr);
-	hmd_window.show();
-	//hmd_window.showFullScreen();
-	//hmd_window.windowHandle()->setScreen(app.screens()[1]);
-	//hmd_window.setGeometry(1920, 0, 1920, 1080);
+    main_window.SetHMDWindow(&hmd_window);
+    hmd_window.SetMainWindow(&main_window);
 
-	main_window.SetHMDWindow(&hmd_window);
-	hmd_window.SetMainWindow(&main_window);
+    //video_player.LoadVideo("test.webm");
 
-	//video_player.LoadVideo("test.webm");
+    //psvr_thread->start();
 
-	//psvr_thread->start();
-
-	int r = app.exec();
+    result = app.exec();
+  }
 
 	hid_exit();
 
-	return r;
+  return result;
 }
 

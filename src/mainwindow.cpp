@@ -99,6 +99,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 
 MainWindow::~MainWindow()
 {
+  psvr_control_.CloseDevice();
   releaseKeyboard();
   removeEventFilter(&key_filter_);
 
