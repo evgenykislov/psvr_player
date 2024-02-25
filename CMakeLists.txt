@@ -26,39 +26,37 @@ include_directories(${LIBVLC_INCLUDE_DIR})
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-
 set(SOURCE_FILES
-		src/main.cpp
-		include/mainwindow.h
-		src/mainwindow.cpp
-		src/psvr.cpp
-		include/psvr.h
-		src/hmdwindow.cpp
-		include/hmdwindow.h
-		src/hmdwidget.cpp
-		include/hmdwidget.h
-		src/videoplayer.cpp
-                include/videoplayer.h
-                include/psvr_control.h
-                src/psvr_control.cpp
-                include/key_filter.h
-                src/key_filter.cpp
+  src/main.cpp
+  include/mainwindow.h
+  src/mainwindow.cpp
+  src/psvr.cpp
+  include/psvr.h
+  src/hmdwindow.cpp
+  include/hmdwindow.h
+  src/hmdwidget.cpp
+  include/hmdwidget.h
+  src/videoplayer.cpp
+  include/videoplayer.h
+  include/psvr_control.h
+  src/psvr_control.cpp
+  include/key_filter.h
+  src/key_filter.cpp
   rotatecalibrationdlg.h
   rotatecalibrationdlg.cpp)
 
 set(UI_FILES
-                src/mainwindow.ui
+  src/mainwindow.ui
   rotatecalibrationdlg.ui)
 
 set(QRC_FILES
-		resources.qrc)
-
-
+  resources.qrc)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/project_version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/project_version.h")
 
 add_executable(${PROJECT_NAME} ${UI_FILES} ${SOURCE_FILES}  ${QRC_FILES})
-qt5_use_modules(${PROJECT_NAME} Core Widgets Gui)
+
 target_link_libraries(${PROJECT_NAME} ${HIDAPI_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${LIBVLC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} pthread)
+target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Widgets Qt5::Gui)
