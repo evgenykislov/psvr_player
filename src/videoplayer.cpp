@@ -66,6 +66,7 @@ VideoPlayer::VideoPlayer(QObject *parent) : QObject(parent)
 	media = 0;
 	media_player = 0;
 	event_manager = 0;
+  need_update_screen_ = false;
 
 	const char *vlc_argv[] =
 		{
@@ -156,15 +157,6 @@ void VideoPlayer::OnParsed() {
   }
 }
 
-void VideoPlayer::SetCurrentData(VideoDataInfoPtr d) {
-  std::lock_guard<std::mutex> locker(current_data_lock_);
-  current_data_ = d;
-}
-
-VideoDataInfoPtr VideoPlayer::GetCurrentData() {
-  std::lock_guard<std::mutex> locker(current_data_lock_);
-  return current_data_;
-}
 
 void VideoPlayer::Play()
 {
@@ -203,14 +195,18 @@ bool VideoPlayer::IsPlaying()
 
 void *VideoPlayer::VLC_Lock(void **p_pixels)
 {
-  vlc_locked_data_ = GetCurrentData();
+  std::lock_guard<std::mutex> l(video_data_lock_);
+  vlc_locked_data_ = video_cache_.GetAvailableData();
   *p_pixels = vlc_locked_data_->GetData();
 	return 0;
 }
 
 void VideoPlayer::VLC_Unlock(void *id, void *const *p_pixels)
 {
+  std::lock_guard<std::mutex> l(video_data_lock_);
+  last_vlc_frame_ = vlc_locked_data_;
   vlc_locked_data_.reset();
+  need_update_screen_ = true;
 }
 
 void VideoPlayer::VLC_Display(void *id)
@@ -221,8 +217,7 @@ void VideoPlayer::VLC_Display(void *id)
 
 unsigned int VideoPlayer::VLC_Setup(char *chroma, unsigned int *width, unsigned int *height, unsigned int *pitches, unsigned int *lines)
 {
-  VideoDataInfoPtr new_data = std::make_shared<VideoDataInfo>(*width, * height);
-  SetCurrentData(new_data);
+  SetDimensions(*width, *height);
 	strcpy(chroma, "RV24");
   *pitches = (*width) * 3;
   *lines = (*height);
@@ -231,7 +226,6 @@ unsigned int VideoPlayer::VLC_Setup(char *chroma, unsigned int *width, unsigned 
 
 void VideoPlayer::VLC_Cleanup()
 {
-  SetCurrentData(VideoDataInfoPtr());
 }
 
 void VideoPlayer::VLC_Event(const struct libvlc_event_t *event)
@@ -255,5 +249,56 @@ void VideoPlayer::VLC_Event(const struct libvlc_event_t *event)
       break;
 		default:
 			break;
-	}
+  }
+}
+
+void VideoPlayer::SetDimensions(size_t width, size_t height) {
+  video_cache_.SetDimensions(width, height);
+}
+
+VideoDataInfoPtr VideoPlayer::GetLastScreen() {
+  std::lock_guard<std::mutex> l(video_data_lock_);
+  if (need_update_screen_) {
+    last_screen_ = last_vlc_frame_;
+    need_update_screen_ = false;
+  }
+  return last_screen_;
+}
+
+
+VideoDataCache::VideoDataCache() {
+  width_ = 0;
+  height_ = 0;
+}
+
+
+void VideoDataCache::SetDimensions(size_t width, size_t height) {
+  std::lock_guard<std::mutex> lock(locker_);
+  if (width == width_ && height == height_) { return; } // Ничего не поменялось
+
+  for (auto& item: storage_) {
+    item.reset();
+  }
+
+  width_ = width;
+  height_ = height;
+  try {
+    for (auto& item: storage_) {
+      item = std::make_shared<VideoDataInfo>(width_, height_);
+    }
+  }
+  catch (std::bad_alloc&) {
+    // TODO Bad alloc
+  }
+}
+
+
+VideoDataInfoPtr VideoDataCache::GetAvailableData() {
+  std::lock_guard<std::mutex> lock(locker_);
+  for (auto& item: storage_) {
+    if (item && item.use_count() == 1) {
+      return item;
+    }
+  }
+  return VideoDataInfoPtr();
 }

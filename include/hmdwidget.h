@@ -104,6 +104,7 @@ class HMDWidget : public QOpenGLWidget
  private:
   static const size_t kTriangleFactor = 32;
   std::vector<QVector3D> cube_vertices_;
+  VideoDataInfoPtr current_texture_; //!< Переменная удерживает текущую выводимую текстуру, чтобы не удалялась
 
 
   void GenerateCubeVertices();

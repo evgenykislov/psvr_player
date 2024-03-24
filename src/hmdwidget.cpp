@@ -277,7 +277,7 @@ QVector3D HMDWidget::ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3
 
 void HMDWidget::UpdateTexture()
 {
-  auto video_data = video_player->GetCurrentData();
+  auto video_data = video_player->GetLastScreen();
   if (!video_data) {
 		return;
   }
@@ -297,6 +297,8 @@ void HMDWidget::UpdateTexture()
 
 	video_tex->bind();
   video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_data->GetData());
+  current_texture_.reset();
+  current_texture_ = video_data;
 }
 
 void HMDWidget::RenderEye(int eye)
