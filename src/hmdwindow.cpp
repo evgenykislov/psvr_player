@@ -16,6 +16,8 @@
  *
  */
 
+#include <cstring>
+
 #include <QBoxLayout>
 #include <QKeyEvent>
 
@@ -46,10 +48,13 @@ void HMDWindow::SwitchFullScreen(bool makefull) {
   if (makefull) {
     showFullScreen();
     setCursor(Qt::BlankCursor);
+    ShowCross(true);
+//    hmd_widget->SetEyesDistance(-0.01f);
   }
   else {
     showNormal();
     unsetCursor();
+    ShowCross(false);
   }
 }
 
@@ -82,5 +87,52 @@ void HMDWindow::closeEvent(QCloseEvent *event)
 		main_window->close();
 	}
 
-	QMainWindow::closeEvent(event);
+  QMainWindow::closeEvent(event);
+}
+
+void HMDWindow::ShowCross(bool on) {
+  return;
+  if (!on) {
+    video_player->SetScreen(VideoDataInfoPtr(), VideoDataInfoPtr());
+  }
+
+  auto or_mask = video_player->GetAvailableData();
+  auto and_mask = video_player->GetAvailableData();
+  // TODO SOME Modifications
+  std::memset(and_mask->GetData(), 0x00, and_mask->GetDataRawSize());
+
+  auto om = or_mask->GetData();
+  auto am = and_mask->GetData();
+  auto ms = or_mask->GetDataRawSize();
+  std::memset(om, 0, ms);
+  for (size_t i = 2880; i < ms; i += 5760) {
+    om[i] = 0xff;
+    om[i + 1] = 0xff;
+    om[i + 2] = 0xff;
+    am[i] = 0xff;
+    am[i + 1] = 0xff;
+    am[i + 2] = 0xff;
+  }
+
+  size_t sm = 1920 * 270 * 3;
+  for (size_t i = 0; i < 1920 * 3; i += 3) {
+    om[i + sm] = 0xff;
+    om[i + 1 + sm] = 0xff;
+    om[i + 2 + sm] = 0xff;
+    am[i + sm] = 0xff;
+    am[i + 1 + sm] = 0xff;
+    am[i + 2 + sm] = 0xff;
+  }
+
+  sm = 1920 * 810 * 3;
+  for (size_t i = 0; i < 1920 * 3; i += 3) {
+    om[i + sm] = 0xff;
+    om[i + 1 + sm] = 0xff;
+    om[i + 2 + sm] = 0xff;
+    am[i + sm] = 0xff;
+    am[i + 1 + sm] = 0xff;
+    am[i + 2 + sm] = 0xff;
+  }
+
+  video_player->SetScreen(or_mask, and_mask);
 }

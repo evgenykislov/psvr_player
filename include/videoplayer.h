@@ -39,6 +39,7 @@ class VideoDataInfo {
   unsigned char* GetData() { return data_.data(); }
   unsigned int GetWidth() { return width_; }
   unsigned int GetHeight() { return height_; }
+  size_t GetDataRawSize() { return data_.size(); }
 
  private:
   VideoDataInfo() = delete;
@@ -122,6 +123,12 @@ class VideoPlayer : public QObject
 
   /*! Выдаёт последнюю текстуру/экран для вывода */
   VideoDataInfoPtr GetLastScreen();
+
+  /*! Выдаёт блок видеоданных, на котором можно порисовать */
+  VideoDataInfoPtr GetAvailableData();
+
+  /*! Задать маски для вывода на экран всяких надписей, полос и т.д. */
+  void SetScreen(VideoDataInfoPtr or_screen, VideoDataInfoPtr and_screen);
 
  private:
   VideoDataCache video_cache_; //!< Кэш с блоками видеоданных (чтобы не перевыделять постоянно память)

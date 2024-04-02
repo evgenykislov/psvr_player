@@ -21,15 +21,21 @@
 #define M_PI 3.1415926535897932384626433832795
 
 uniform sampler2D tex_uni;
+uniform sampler2D tex_info;
 uniform vec4 min_max_uv_uni;
 uniform float projection_angle_factor_uni;
 uniform bool cylinder_type;
+uniform mat4 modelview_projection_uni;
 
 in vec3 position_var;
 in float blue_x_disp;
 in float blue_y_disp;
 in float green_x_disp;
 in float green_y_disp;
+
+in vec3 info_red_position;
+in vec3 info_green_position;
+in vec3 info_blue_position;
 
 
 out vec4 color_out;
@@ -43,8 +49,8 @@ vec4 GetCylinderColor(vec3 position) {
   const float yarc = xarc / 16.0 * 9.0;
   float relx = position.x / (position.z / plane_distance);
   float rely = position.y / (position.z / plane_distance);
-  float anglex = atan(-relx, cylinder_radius);
-  float angley = atan(rely, cylinder_radius);
+  float anglex = atan(relx, cylinder_radius);
+  float angley = atan(-rely, cylinder_radius);
 
   if (anglex < -xarc/2 || anglex > xarc/2) {
     return vec4(0.0);
@@ -96,11 +102,13 @@ vec4 GetSphereColor(vec3 position) {
 void main(void)
 {
   // Calculates position of colored point
-  vec3 pos_red = position_var; // Red without correction
-  vec3 pos_blue = position_var;
+  vec4 view_pos = modelview_projection_uni * vec4(position_var, 1.0);
+
+  vec3 pos_red = view_pos.xyz; // Red without correction
+  vec3 pos_blue = pos_red;
   pos_blue.x += pos_blue.z * blue_x_disp;
   pos_blue.y += pos_blue.z * blue_y_disp;
-  vec3 pos_green = position_var;
+  vec3 pos_green = pos_red;
   pos_green.x += pos_green.z * green_x_disp;
   pos_green.y += pos_green.z * green_y_disp;
 
@@ -114,4 +122,14 @@ void main(void)
     color_out.b = GetSphereColor(pos_blue).b;
     color_out.g = GetSphereColor(pos_green).g;
   }
+
+  // Наложим маску информации
+  // Координаты инфо-поля: x = -0.5 - 0.5; y = -0.5 - 0.5; z = 1
+  vec4 info_color = vec4(0, 0, 0, 0);
+  vec2 pos = info_red_position.xy + vec2(0.5, 0.5);
+  if (pos.x > 0 && pos.x < 1 && pos.y > 0 && pos.y < 1) {
+    info_color = texture(tex_info, pos);
+  }
+  float alpha = info_color.a;
+  color_out = color_out * (1.0 - alpha) + info_color * alpha;
 }

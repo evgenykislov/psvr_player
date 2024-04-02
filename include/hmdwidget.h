@@ -30,6 +30,8 @@
 #include "videoplayer.h"
 #include "psvr.h"
 
+/*! Класс-виджет для обработки изображения, наложения и т.д.
+В нём оборачиваются все функции по работе с OpenGL */
 class HMDWidget : public QOpenGLWidget
 {
 	Q_OBJECT
@@ -56,6 +58,7 @@ class HMDWidget : public QOpenGLWidget
 		QOpenGLVertexArrayObject cube_vao;
 
 		QOpenGLTexture *video_tex;
+    std::shared_ptr<QOpenGLTexture> info_tex_; //!< Текстура с информацией: прогресс, настроики и т.д.
 
 
 		/*QOpenGLBuffer screen_vbo;
@@ -86,6 +89,8 @@ class HMDWidget : public QOpenGLWidget
 		int GetVideoAngle()										{ return video_angle; }
 		void SetVideoAngle(int angle)							{ this->video_angle = angle; }
 
+    void SetEyesDistance(float disp) { eyes_disp_ = disp; }
+
     void SetCylinderScreen(bool value);
 
 		VideoProjectionMode GetVideoProjectionMode()			{ return video_projection_mode; }
@@ -103,8 +108,17 @@ class HMDWidget : public QOpenGLWidget
 
  private:
   static const size_t kTriangleFactor = 32;
+  static const int kInfoWidth = 960;
+  static const int kInfoHeight = 960;
+
+  using InfoTextureRow = uint32_t[kInfoWidth];
+
+  std::vector<uint32_t> info_texture_data_;
+  InfoTextureRow* info_texture_array_; //!< Указывает на данные в info_texture_data_
   std::vector<QVector3D> cube_vertices_;
   VideoDataInfoPtr current_texture_; //!< Переменная удерживает текущую выводимую текстуру, чтобы не удалялась
+
+  float eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
 
 
   void GenerateCubeVertices();
