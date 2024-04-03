@@ -16,6 +16,9 @@
  *
  */
 
+#include <cstring>
+#include <fstream>
+
 #include <QBoxLayout>
 #include <QKeyEvent>
 
@@ -34,7 +37,10 @@ HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 	resize(640, 480);
 
 	hmd_widget = new HMDWidget(video_player, psvr);
-	setCentralWidget(hmd_widget);
+  info_data_ = hmd_widget->GetInfoData();
+  setCentralWidget(hmd_widget);
+
+  LoadTestInfo();
 }
 
 HMDWindow::~HMDWindow()
@@ -46,6 +52,7 @@ void HMDWindow::SwitchFullScreen(bool makefull) {
   if (makefull) {
     showFullScreen();
     setCursor(Qt::BlankCursor);
+//    hmd_widget->SetEyesDistance(-0.01f);
   }
   else {
     showNormal();
@@ -82,5 +89,15 @@ void HMDWindow::closeEvent(QCloseEvent *event)
 		main_window->close();
 	}
 
-	QMainWindow::closeEvent(event);
+  QMainWindow::closeEvent(event);
 }
+
+void HMDWindow::LoadTestInfo() {
+  if (!info_data_) { return; }
+  std::ifstream f("info_test.data", std::ios_base::binary);
+  if (f) {
+    f.read(reinterpret_cast<char*>(info_data_),
+        HMDWidget::kInfoHeight * sizeof(HMDWidget::InfoTextureRow));
+  }
+}
+

@@ -29,9 +29,14 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 
 	sphere_shader = 0;
 	distortion_shader = 0;
-	video_tex = 0;
+  video_tex = nullptr;
+  info_texture_data_.resize(kInfoHeight * kInfoWidth);
+  info_texture_array_ = (InfoTextureRow*)info_texture_data_.data();
+  memset(info_texture_array_, 0, kInfoWidth * kInfoWidth * sizeof(uint32_t)); // Makes information fully transparent
 
 	fov = 80.0f;
+
+  eyes_disp_ = 0.0f;
 
 	video_angle = 360;
 	video_projection_mode = Monoscopic;
@@ -151,6 +156,15 @@ void HMDWidget::initializeGL()
 	unsigned char data[3] = { 0, 0, 0};
   video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, (const void *)data);
 
+  // Создадим текстуру для вывода информации
+  info_tex_.reset(new QOpenGLTexture(QOpenGLTexture::Target2D));
+  info_tex_->create();
+  info_tex_->setFormat(QOpenGLTexture::RGBA8_UNorm);
+  info_tex_->setSize(kInfoWidth, kInfoHeight);
+  info_tex_->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+  info_tex_->allocateStorage(QOpenGLTexture::RGBA, QOpenGLTexture::PixelType::UInt8);
+  info_tex_->bind();
+  info_tex_->setData(QOpenGLTexture::RGBA, QOpenGLTexture::PixelType::UInt8, info_texture_data_.data());
 
 	/*distortion_shader = new QOpenGLShaderProgram(this);
 	distortion_shader->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shader/distortion.vert");
@@ -277,7 +291,7 @@ QVector3D HMDWidget::ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3
 
 void HMDWidget::UpdateTexture()
 {
-  auto video_data = video_player->GetCurrentData();
+  auto video_data = video_player->GetLastScreen();
   if (!video_data) {
 		return;
   }
@@ -322,8 +336,11 @@ void HMDWidget::RenderEye(int eye)
 	sphere_shader->setUniformValue("modelview_projection_uni", projection_matrix * modelview_matrix);
 
 	sphere_shader->setUniformValue("tex_uni", 0);
+  sphere_shader->setUniformValue("tex_info", 1);
   sphere_shader->setUniformValue("cylinder_type", cylinder_screen_);
+  sphere_shader->setUniformValue("vertex_x_disp", eye ? -0.01f : 0.01f);
 	video_tex->bind(0);
+  info_tex_->bind(1);
 
   int eye_inv = invert_stereo ? eye : 1 - eye;
 
@@ -334,9 +351,9 @@ void HMDWidget::RenderEye(int eye)
 			break;
 		case OverUnder:
 			if(eye_inv == 1)
-				sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.5f, 1.0f, 1.0f);
+        sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.5f, 1.0f, 1.0f);
 			else
-				sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.0f, 1.0f, 0.5f);
+        sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.0f, 1.0f, 0.5f);
 			break;
 		case SideBySide:
 			if(eye_inv == 1)

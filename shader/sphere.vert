@@ -20,6 +20,9 @@
 
 uniform mat4 modelview_projection_uni;
 
+//!< Смещение изображения к центру в размерности изображения на один глаз. Типовое значение 0.01
+uniform float vertex_x_disp;
+
 in vec3 vertex_attr;
 
 out vec3 position_var;
@@ -28,14 +31,18 @@ out float blue_y_disp;
 out float green_x_disp;
 out float green_y_disp;
 
+out vec3 info_red_position;
+// out vec3 info_green_position;
+// out vec3 info_blue_position;
+
 void main(void)
 {
   position_var = vertex_attr;
-  vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
+  vec4 scr_pos = vec4(vertex_attr, 1.0); // modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
 
   // Compensate distortion
-  if (true) {
+  if (false) {
     const float scr_radius = 1.8;
     const float dis_k1 = -0.32; // Manual calibration
     const float dis_k2 = 0.015;
@@ -66,4 +73,14 @@ void main(void)
   blue_y_disp = gl_Position.y / gl_Position.z * blue_y;
   green_x_disp = gl_Position.x / gl_Position.z * green_x;
   green_y_disp = gl_Position.y / gl_Position.z * green_y;
+
+
+  float info_x_scale = -0.8;
+  float info_y_scale = -0.6;
+  info_red_position = vertex_attr;
+  info_red_position.x /= info_red_position.z * info_x_scale;
+  info_red_position.y /= info_red_position.z * info_y_scale;
+  info_red_position.z = 1.0;
+
+  info_red_position.x -= vertex_x_disp;
 }

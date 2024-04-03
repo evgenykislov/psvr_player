@@ -39,6 +39,7 @@ class VideoDataInfo {
   unsigned char* GetData() { return data_.data(); }
   unsigned int GetWidth() { return width_; }
   unsigned int GetHeight() { return height_; }
+  size_t GetDataRawSize() { return data_.size(); }
 
  private:
   VideoDataInfo() = delete;
@@ -52,6 +53,33 @@ class VideoDataInfo {
 
 using VideoDataInfoPtr = std::shared_ptr<VideoDataInfo>;
 
+/*! Кэш для блоков видеоданных */
+class VideoDataCache {
+ public:
+  VideoDataCache();
+
+  /*! Выставить размер видеоданных
+  \param width, height - ширина, высота кадра */
+  void SetDimensions(size_t width, size_t height);
+
+  /*! Запросить свободный блок видеоданных. Если данных нет,заняты,др.причина -
+  возвращается указатель на nullptr */
+  VideoDataInfoPtr GetAvailableData();
+
+ private:
+  VideoDataCache(const VideoDataCache&) = delete;
+  VideoDataCache(VideoDataCache&&) = delete;
+  VideoDataCache& operator=(const VideoDataCache&) = delete;
+  VideoDataCache& operator=(VideoDataCache&&) = delete;
+
+  static const size_t kStorageSize = 10;
+
+  size_t width_;
+  size_t height_;
+  VideoDataInfoPtr storage_[kStorageSize];
+  std::mutex locker_;
+};
+
 
 class VideoPlayer : public QObject
 {
@@ -64,10 +92,6 @@ class VideoPlayer : public QObject
 		libvlc_media_t *media;
 		libvlc_media_player_t *media_player;
 		libvlc_event_manager_t *event_manager;
-
-    VideoDataInfoPtr current_data_; // Current data for playing
-    std::mutex current_data_lock_; // Lock for current_data_ only
-    VideoDataInfoPtr vlc_locked_data_; // Data, locked by vlc player. Set new value in vlc callback only
 
 		void UnloadVideo();
     void OnParsed();
@@ -95,9 +119,18 @@ class VideoPlayer : public QObject
 
 		void VLC_Event(const struct libvlc_event_t *event);
 
-    void SetCurrentData(VideoDataInfoPtr d);
-    VideoDataInfoPtr GetCurrentData();
+  void SetDimensions(size_t width, size_t height);
 
+  /*! Выдаёт последнюю текстуру/экран для вывода */
+  VideoDataInfoPtr GetLastScreen();
+
+ private:
+  VideoDataCache video_cache_; //!< Кэш с блоками видеоданных (чтобы не перевыделять постоянно память)
+  VideoDataInfoPtr last_vlc_frame_; // Current data for playing
+  VideoDataInfoPtr vlc_locked_data_; //!< Видеоданные, которые сейчас заполянются vlc библиотекой (декодированный кадр)
+  VideoDataInfoPtr last_screen_; //!< Последнее изображение для вывода на экран
+  bool need_update_screen_; //!< Признак, что необходимо пересчитать последний экран
+  std::mutex video_data_lock_; // Lock for current_data_ only
 
 	signals:
 		void DisplayVideoFrame();

@@ -51,6 +51,13 @@ class HMDWindow : public QMainWindow
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
+ private:
+  HMDWidget::InfoTextureRow* info_data_;
+
+  /*! Загрузить тестовую информацию, если она есть */
+  void LoadTestInfo();
+
+
 };
 
 

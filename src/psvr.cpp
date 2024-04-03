@@ -137,9 +137,9 @@ bool PsvrSensors::Read(int timeout)
   alocker.unlock();
 
   std::unique_lock<std::mutex> mlocker(matrix_lock_);
-  modelview_matrix.rotate(y_angle, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
-  modelview_matrix.rotate(x_angle, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
-  modelview_matrix.rotate(z_angle, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
+  modelview_matrix.rotate(-y_angle, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
+  modelview_matrix.rotate(-x_angle, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
+  modelview_matrix.rotate(-z_angle, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
   mlocker.unlock();
 
   return true;
