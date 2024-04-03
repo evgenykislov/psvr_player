@@ -52,7 +52,12 @@ class HMDWindow : public QMainWindow
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
  private:
-  void ShowCross(bool on);
+  HMDWidget::InfoTextureRow* info_data_;
+
+  /*! Загрузить тестовую информацию, если она есть */
+  void LoadTestInfo();
+
+
 };
 
 

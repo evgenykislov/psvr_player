@@ -32,15 +32,7 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
   video_tex = nullptr;
   info_texture_data_.resize(kInfoHeight * kInfoWidth);
   info_texture_array_ = (InfoTextureRow*)info_texture_data_.data();
-
-  // Make cross for debugging
-  memset(info_texture_array_, 0, kInfoWidth * kInfoWidth * sizeof(uint32_t));
-  for (size_t i = 0; i < kInfoWidth; ++i) {
-    info_texture_array_[kInfoHeight / 2][i] = 0xffffffff;
-  }
-  for (size_t i = 0; i < kInfoHeight; ++i) {
-    info_texture_array_[i][kInfoWidth / 2] = 0xffffffff;
-  }
+  memset(info_texture_array_, 0, kInfoWidth * kInfoWidth * sizeof(uint32_t)); // Makes information fully transparent
 
 	fov = 80.0f;
 
@@ -319,8 +311,6 @@ void HMDWidget::UpdateTexture()
 
 	video_tex->bind();
   video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_data->GetData());
-  current_texture_.reset();
-  current_texture_ = video_data;
 }
 
 void HMDWidget::RenderEye(int eye)
@@ -361,9 +351,9 @@ void HMDWidget::RenderEye(int eye)
 			break;
 		case OverUnder:
 			if(eye_inv == 1)
-        sphere_shader->setUniformValue("min_max_uv_uni", 0.1f - eyes_disp_, 0.5f, 0.9f - eyes_disp_, 1.0f);
+        sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.5f, 1.0f, 1.0f);
 			else
-        sphere_shader->setUniformValue("min_max_uv_uni", 0.1f - eyes_disp_, 0.0f, 0.9f - eyes_disp_, 0.5f);
+        sphere_shader->setUniformValue("min_max_uv_uni", 0.0f, 0.0f, 1.0f, 0.5f);
 			break;
 		case SideBySide:
 			if(eye_inv == 1)

@@ -124,18 +124,10 @@ class VideoPlayer : public QObject
   /*! Выдаёт последнюю текстуру/экран для вывода */
   VideoDataInfoPtr GetLastScreen();
 
-  /*! Выдаёт блок видеоданных, на котором можно порисовать */
-  VideoDataInfoPtr GetAvailableData();
-
-  /*! Задать маски для вывода на экран всяких надписей, полос и т.д. */
-  void SetScreen(VideoDataInfoPtr or_screen, VideoDataInfoPtr and_screen);
-
  private:
   VideoDataCache video_cache_; //!< Кэш с блоками видеоданных (чтобы не перевыделять постоянно память)
   VideoDataInfoPtr last_vlc_frame_; // Current data for playing
   VideoDataInfoPtr vlc_locked_data_; //!< Видеоданные, которые сейчас заполянются vlc библиотекой (декодированный кадр)
-  VideoDataInfoPtr info_screen_data_or_; //!< Данные для вывода на экран (режимы, полоса прогресса и т.п.)
-  VideoDataInfoPtr info_screen_data_and_;
   VideoDataInfoPtr last_screen_; //!< Последнее изображение для вывода на экран
   bool need_update_screen_; //!< Признак, что необходимо пересчитать последний экран
   std::mutex video_data_lock_; // Lock for current_data_ only

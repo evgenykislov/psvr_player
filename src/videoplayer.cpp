@@ -23,23 +23,6 @@
 #include "videoplayer.h"
 
 
-void MemoryOrAnd(void* result, void* or_mask, void* and_mask, size_t amount) {
-  if (reinterpret_cast<size_t>(result) % 4 != 0) { return; }
-  if (reinterpret_cast<size_t>(or_mask) % 4 != 0) { return; }
-  if (reinterpret_cast<size_t>(and_mask) % 4 != 0) { return; }
-  amount /= 4;
-  uint32_t* r = static_cast<uint32_t*>(result);
-  uint32_t* om = static_cast<uint32_t*>(or_mask);
-  uint32_t* am = static_cast<uint32_t*>(and_mask);
-  for (;amount != 0; --amount) {
-    *r = (*r | *om) & *am;
-    ++r;
-    ++om;
-    ++am;
-  }
-}
-
-
 static void *lock(void *data, void **p_pixels)
 {
 	return ((VideoPlayer *) data)->VLC_Lock(p_pixels);
@@ -276,30 +259,9 @@ VideoDataInfoPtr VideoPlayer::GetLastScreen() {
   std::lock_guard<std::mutex> l(video_data_lock_);
   if (need_update_screen_) {
     last_screen_ = last_vlc_frame_;
-    if (last_screen_) {
-      if (info_screen_data_or_ && info_screen_data_and_ &&
-          info_screen_data_or_->GetWidth() == last_screen_->GetWidth() &&
-          info_screen_data_or_->GetHeight() == last_screen_->GetHeight() &&
-          info_screen_data_and_->GetWidth() == last_screen_->GetWidth() &&
-          info_screen_data_and_->GetHeight() == last_screen_->GetHeight()) {
-        MemoryOrAnd(last_screen_->GetData(), info_screen_data_or_->GetData(),
-            info_screen_data_and_->GetData(), last_screen_->GetDataRawSize());
-      }
-    }
     need_update_screen_ = false;
   }
   return last_screen_;
-}
-
-VideoDataInfoPtr VideoPlayer::GetAvailableData() {
-  return video_cache_.GetAvailableData();
-}
-
-void VideoPlayer::SetScreen(VideoDataInfoPtr or_screen, VideoDataInfoPtr and_screen) {
-  std::lock_guard<std::mutex> l(video_data_lock_);
-  info_screen_data_or_ = or_screen;
-  info_screen_data_and_ = and_screen;
-  need_update_screen_ = true;
 }
 
 

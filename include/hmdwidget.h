@@ -83,6 +83,10 @@ class HMDWidget : public QOpenGLWidget
 		HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
 		~HMDWidget();
 
+    static const int kInfoWidth = 1920;
+    static const int kInfoHeight = 1920;
+    using InfoTextureRow = uint32_t[kInfoWidth];
+
 		float GetFOV()											{ return fov; }
 		void SetFOV(float fov)									{ this->fov = fov; }
 
@@ -101,6 +105,11 @@ class HMDWidget : public QOpenGLWidget
 
 		void SetRGBWorkaround(bool enabled)						{ this->rgb_workaround = enabled; }
 
+    /*! Выдаёт указатель на данные для рисования окна информации.
+    Данные представляют собой массив kInfoHeight * kInfoWidth пикселей,
+    каждый пиксель 4 байта (RGBA) */
+    InfoTextureRow* GetInfoData() { return info_texture_array_; }
+
 	protected:
 		void initializeGL() Q_DECL_OVERRIDE;
 		void resizeGL(int w, int h) Q_DECL_OVERRIDE;
@@ -108,15 +117,12 @@ class HMDWidget : public QOpenGLWidget
 
  private:
   static const size_t kTriangleFactor = 32;
-  static const int kInfoWidth = 960;
-  static const int kInfoHeight = 960;
 
-  using InfoTextureRow = uint32_t[kInfoWidth];
 
-  std::vector<uint32_t> info_texture_data_;
+
+  std::vector<uint32_t> info_texture_data_; //!< Память под данные выделяются в конструкторе. Единожды
   InfoTextureRow* info_texture_array_; //!< Указывает на данные в info_texture_data_
   std::vector<QVector3D> cube_vertices_;
-  VideoDataInfoPtr current_texture_; //!< Переменная удерживает текущую выводимую текстуру, чтобы не удалялась
 
   float eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
 
