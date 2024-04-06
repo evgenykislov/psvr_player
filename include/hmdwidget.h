@@ -19,6 +19,8 @@
 #ifndef PSVR_HMDWIDGET_H
 #define PSVR_HMDWIDGET_H
 
+#include <atomic>
+
 #include <QOpenGLWidget>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -124,7 +126,8 @@ class HMDWidget : public QOpenGLWidget
   InfoTextureRow* info_texture_array_; //!< Указывает на данные в info_texture_data_
   std::vector<QVector3D> cube_vertices_;
 
-  float eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
+  // TODO Can make faster
+  std::atomic<float> eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
 
 
   void GenerateCubeVertices();

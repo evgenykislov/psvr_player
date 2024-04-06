@@ -31,7 +31,7 @@
 
 MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
-    current_play_position_(0)
+    current_play_position_(0), settings_("psvr_player.conf", QSettings::IniFormat)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -118,6 +118,7 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 		
 	ui->FOVDoubleSpinBox->setValue(hmd_window->GetHMDWidget()->GetFOV());
 
+
 	HMDWidget *hmd_widget = hmd_window->GetHMDWidget();
 
 	switch(hmd_widget->GetVideoAngle())
@@ -153,6 +154,9 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 			break;
 	}
 
+  auto ec = settings_.value("eyes_corr", 0).toInt();
+  ui->EyesDispSpinBox->setValue(ec);
+  OnEyesCorrChanged(ec);
 }
 
 
@@ -463,4 +467,16 @@ void MainWindow::on_CalibrationBtn_clicked() {
   if (dlg.exec() == QDialog::Accepted) {
 
   }
+}
+
+void MainWindow::OnEyesCorrChanged(int value)
+{
+  if (!hmd_window) { return; }
+  hmd_window->SetEyesDistance(value * kEyeCorrFactor);
+  settings_.setValue("eyes_corr", value);
+  settings_.sync();
+
+  const float kScreenFactor = 32.0f;
+  int av = static_cast<int>(68.0f - value * kEyeCorrFactor * kScreenFactor);
+  ui->EyesDistanceLabel->setText(QString("about %1 mm").arg(av));
 }

@@ -64,6 +64,10 @@ void HMDWindow::ChangeFullScreen() {
   SwitchFullScreen(!isFullScreen());
 }
 
+void HMDWindow::SetEyesDistance(float disp) {
+  hmd_widget->SetEyesDistance(disp);
+}
+
 void HMDWindow::keyPressEvent(QKeyEvent *event)
 {
 	switch(event->key())

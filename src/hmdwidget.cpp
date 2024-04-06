@@ -322,6 +322,11 @@ void HMDWidget::RenderEye(int eye)
 	//gl->glViewport(0, 0, w/2, h);
 	//gl->glClear(GL_COLOR_BUFFER_BIT);
 
+  float eyedisp = eyes_disp_;
+  if (eye) {
+    eyedisp = -eyedisp;
+  }
+
 	gl->glViewport(eye == 1 ? w/2 : 0, 0, w/2, h);
 
 
@@ -338,7 +343,7 @@ void HMDWidget::RenderEye(int eye)
 	sphere_shader->setUniformValue("tex_uni", 0);
   sphere_shader->setUniformValue("tex_info", 1);
   sphere_shader->setUniformValue("cylinder_type", cylinder_screen_);
-  sphere_shader->setUniformValue("vertex_x_disp", eye ? -0.01f : 0.01f);
+  sphere_shader->setUniformValue("vertex_x_disp", eyedisp);
 	video_tex->bind(0);
   info_tex_->bind(1);
 
