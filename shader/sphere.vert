@@ -83,4 +83,5 @@ void main(void)
   info_red_position.z = 1.0;
 
   info_red_position.x -= vertex_x_disp;
+  position_var.x -= vertex_x_disp;
 }
