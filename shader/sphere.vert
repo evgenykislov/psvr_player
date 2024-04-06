@@ -53,6 +53,8 @@ vec3 GetBluePosition(vec3 pos) {
 
 void main(void)
 {
+  vec4 scale = vec4(1.0, 0.85, 1.0, 1.0);
+
   position_var = vertex_attr;
   vec4 scr_pos = vec4(vertex_attr, 1.0); // modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
@@ -76,9 +78,11 @@ void main(void)
       float dis_koef = newlen / dislen;
       distorsion = vec4(dis_koef, dis_koef, 1.0, 1.0);
     }
-
     gl_Position = scr_pos * distorsion;
   }
+
+  // Scale compensation
+  gl_Position *= scale;
 
   // Compensate chromatic abberation
   float blue_y = -0.015; // 1.0192
@@ -91,8 +95,8 @@ void main(void)
   green_y_disp = gl_Position.y / gl_Position.z * green_y;
 
 
-  float info_x_scale = -0.8;
-  float info_y_scale = -0.6;
+  float info_x_scale = -1.0;
+  float info_y_scale = -1.0;
   info_red_position = vertex_attr;
   info_red_position.x /= info_red_position.z * info_x_scale;
   info_red_position.y /= info_red_position.z * info_y_scale;
