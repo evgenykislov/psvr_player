@@ -96,6 +96,7 @@ class MainWindow : public QMainWindow
  private slots:
   void on_CalibrationBtn_clicked();
   void OnEyesCorrChanged(int);
+  void OnAutoFullScreenChanged(int);
 
  private:
   const int kUpdateSensorsInterval = 2000;
@@ -110,6 +111,7 @@ class MainWindow : public QMainWindow
   QString last_directory_;
   QString last_file_;
   QSettings settings_;
+  bool auto_full_screen_;
 
   QString FormatPlayTime(uint64_t value_ms);
   void ShowHelmetState();

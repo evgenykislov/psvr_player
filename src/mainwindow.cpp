@@ -31,7 +31,8 @@
 
 MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
-    current_play_position_(0), settings_("psvr_player.conf", QSettings::IniFormat)
+    current_play_position_(0), settings_("psvr_player.conf", QSettings::IniFormat),
+    auto_full_screen_(false)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -157,6 +158,9 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
   auto ec = settings_.value("eyes_corr", 0).toInt();
   ui->EyesDispSpinBox->setValue(ec);
   OnEyesCorrChanged(ec);
+
+  auto_full_screen_ = settings_.value("auto_full_screen", true).toBool();
+  ui->AutoFullScreenChk->setChecked(auto_full_screen_);
 }
 
 
@@ -255,7 +259,7 @@ void MainWindow::PlayerPlaying()
     psvr_control_.SetVRMode(true);
   }
 
-  if (ui->AutoFullScreenChk->isChecked()) {
+  if (auto_full_screen_) {
     if (hmd_window) {
       hmd_window->SwitchFullScreen(true);
     }
@@ -276,10 +280,8 @@ void MainWindow::PlayerStopped()
 	ui->PlayerSlider->setValue(0);
 	ui->PlayButton->setText(tr("Play"));
 
-  if (ui->AutoFullScreenChk->isChecked()) {
-    if (hmd_window) {
-      hmd_window->showNormal();
-    }
+  if (hmd_window) {
+    hmd_window->showNormal();
   }
 
   if (psvr_control_.IsOpened() || psvr_control_.OpenDevice()) {
@@ -479,4 +481,10 @@ void MainWindow::OnEyesCorrChanged(int value)
   const float kScreenFactor = 32.0f;
   int av = static_cast<int>(68.0f - value * kEyeCorrFactor * kScreenFactor);
   ui->EyesDistanceLabel->setText(QString("about %1 mm").arg(av));
+}
+
+void MainWindow::OnAutoFullScreenChanged(int value) {
+  auto_full_screen_ = value != 0;
+  settings_.setValue("auto_full_screen", auto_full_screen_);
+  settings_.sync();
 }

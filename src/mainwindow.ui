@@ -540,8 +540,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>AutoFullScreenChk</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnAutoFullScreenChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>408</x>
+     <y>489</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>408</x>
+     <y>377</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>OnEyesCorrChanged(int)</slot>
+  <slot>OnAutoFullScreenChanged(int)</slot>
  </slots>
 </ui>
