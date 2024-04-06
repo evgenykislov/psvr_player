@@ -99,6 +99,17 @@ vec4 GetSphereColor(vec3 position) {
 }
 
 
+vec4 GetInfoColor(vec3 pos) {
+  vec4 info_color = vec4(0, 0, 0, 0);
+  vec2 pos2 = pos.xy + vec2(0.5, 0.5);
+  if (pos2.x > 0 && pos2.x < 1 && pos2.y > 0 && pos2.y < 1) {
+    info_color = texture(tex_info, pos2);
+  }
+  return info_color;
+}
+
+
+
 void main(void)
 {
   // Calculates position of colored point
@@ -125,11 +136,11 @@ void main(void)
 
   // Наложим маску информации
   // Координаты инфо-поля: x = -0.5 - 0.5; y = -0.5 - 0.5; z = 1
-  vec4 info_color = vec4(0, 0, 0, 0);
-  vec2 pos = info_red_position.xy + vec2(0.5, 0.5);
-  if (pos.x > 0 && pos.x < 1 && pos.y > 0 && pos.y < 1) {
-    info_color = texture(tex_info, pos);
-  }
-  float alpha = info_color.a;
-  color_out = color_out * (1.0 - alpha) + info_color * alpha;
+  vec4 infor = GetInfoColor(info_red_position);
+  vec4 infog = GetInfoColor(info_green_position);
+  vec4 infob = GetInfoColor(info_blue_position);
+
+  color_out.r = color_out.r * (1.0 - infor.a) + infor.r * infor.a;
+  color_out.g = color_out.g * (1.0 - infog.a) + infog.g * infog.a;
+  color_out.b = color_out.b * (1.0 - infob.a) + infob.b * infob.a;
 }

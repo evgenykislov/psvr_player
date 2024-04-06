@@ -32,8 +32,24 @@ out float green_x_disp;
 out float green_y_disp;
 
 out vec3 info_red_position;
-// out vec3 info_green_position;
-// out vec3 info_blue_position;
+out vec3 info_green_position;
+out vec3 info_blue_position;
+
+
+vec3 GetGreenPosition(vec3 pos) {
+  pos.x /= 0.995;
+  pos.y /= 0.994;
+  pos.y -= 0.002;
+  return pos;
+}
+
+
+vec3 GetBluePosition(vec3 pos) {
+  pos.x /= 0.990;
+  pos.y /= 0.984;
+  return pos;
+}
+
 
 void main(void)
 {
@@ -81,7 +97,11 @@ void main(void)
   info_red_position.x /= info_red_position.z * info_x_scale;
   info_red_position.y /= info_red_position.z * info_y_scale;
   info_red_position.z = 1.0;
+  info_green_position = GetGreenPosition(info_red_position);
+  info_blue_position = GetBluePosition(info_red_position);
 
   info_red_position.x -= vertex_x_disp;
+  info_green_position.x -= vertex_x_disp;
+  info_blue_position.x -= vertex_x_disp;
   position_var.x -= vertex_x_disp;
 }
