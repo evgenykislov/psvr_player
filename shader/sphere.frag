@@ -134,8 +134,16 @@ void main(void)
     color_out.g = GetSphereColor(pos_green).g;
   }
 
+  // Координаты отображения для красного (info_red_position),
+  // зелёного (info_green_position) и синего (info info_blue_position) цвета
+  // Координаты поля: x = -1 - +1; y = -1 - +1; z = 1
+  // Координата x возрастает слева (-1) - направо (+1);
+  // у возрастает снизу (-1) вверх (+1)
+  // Координаты могут выходить за границы поля или быть меньше, т.к. есть
+  // коррекция глазного расстояния
+
+
   // Наложим маску информации
-  // Координаты инфо-поля: x = -0.5 - 0.5; y = -0.5 - 0.5; z = 1
   vec4 infor = GetInfoColor(info_red_position);
   vec4 infog = GetInfoColor(info_green_position);
   vec4 infob = GetInfoColor(info_blue_position);
