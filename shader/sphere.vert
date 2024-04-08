@@ -37,25 +37,29 @@ out vec3 info_blue_position;
 
 
 vec3 GetGreenPosition(vec3 pos) {
+  pos.y += 0.0015;
   pos.x /= 0.995;
   pos.y /= 0.994;
-  pos.y -= 0.002;
   return pos;
 }
 
 
 vec3 GetBluePosition(vec3 pos) {
+  pos.x -= 0.0015;
+  pos.y += 0.002;
   pos.x /= 0.990;
-  pos.y /= 0.984;
+  pos.y /= 0.990;
   return pos;
 }
 
 
 void main(void)
 {
-  vec4 scale = vec4(1.0, 0.85, 1.0, 1.0);
+  vec4 scale = vec4(1.0, 0.87, 1.0, 1.0);
 
   position_var = vertex_attr;
+  // scr_pos это позиция точки на экране с учётом "квадратных" пикселей.
+  // т.е. пропорции 1:1
   vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
 
@@ -97,7 +101,7 @@ void main(void)
 
   float info_x_scale = -1.0;
   float info_y_scale = -1.0;
-  info_red_position = gl_Position.xyz;
+  info_red_position = scr_pos.xyz;
   info_red_position.x /= info_red_position.z * info_x_scale;
   info_red_position.y /= info_red_position.z * info_y_scale;
   info_red_position.z = 1.0;
