@@ -49,8 +49,8 @@ vec4 GetCylinderColor(vec3 position) {
   const float yarc = xarc / 16.0 * 9.0;
   float relx = position.x / (position.z / plane_distance);
   float rely = position.y / (position.z / plane_distance);
-  float anglex = atan(relx, cylinder_radius);
-  float angley = atan(-rely, cylinder_radius);
+  float anglex = atan(-relx, cylinder_radius);
+  float angley = atan(rely, cylinder_radius);
 
   if (anglex < -xarc/2 || anglex > xarc/2) {
     return vec4(0.0);
@@ -113,7 +113,7 @@ vec4 GetInfoColor(vec3 pos) {
 void main(void)
 {
   // Calculates position of colored point
-  vec4 view_pos = modelview_projection_uni * vec4(position_var, 1.0);
+  vec4 view_pos = vec4(position_var, 1.0);
 
   vec3 pos_red = view_pos.xyz; // Red without correction
   vec3 pos_blue = pos_red;

@@ -56,7 +56,7 @@ void main(void)
   vec4 scale = vec4(1.0, 0.85, 1.0, 1.0);
 
   position_var = vertex_attr;
-  vec4 scr_pos = vec4(vertex_attr, 1.0); // modelview_projection_uni * vec4(vertex_attr, 1.0);
+  vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
 
   // Compensate distortion
@@ -97,15 +97,15 @@ void main(void)
 
   float info_x_scale = -1.0;
   float info_y_scale = -1.0;
-  info_red_position = vertex_attr;
+  info_red_position = gl_Position.xyz;
   info_red_position.x /= info_red_position.z * info_x_scale;
   info_red_position.y /= info_red_position.z * info_y_scale;
   info_red_position.z = 1.0;
   info_green_position = GetGreenPosition(info_red_position);
   info_blue_position = GetBluePosition(info_red_position);
 
-  info_red_position.x -= vertex_x_disp;
-  info_green_position.x -= vertex_x_disp;
-  info_blue_position.x -= vertex_x_disp;
+  info_red_position.x += vertex_x_disp;
+  info_green_position.x += vertex_x_disp;
+  info_blue_position.x += vertex_x_disp;
   position_var.x -= vertex_x_disp;
 }
