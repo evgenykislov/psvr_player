@@ -20,6 +20,7 @@
 #define PSVR_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSettings>
 #include <QTimer>
 
 #include "key_filter.h"
@@ -92,12 +93,15 @@ class MainWindow : public QMainWindow
 		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
-private slots:
-    void on_CalibrationBtn_clicked();
+ private slots:
+  void on_CalibrationBtn_clicked();
+  void OnEyesCorrChanged(int);
+  void OnAutoFullScreenChanged(int);
 
  private:
   const int kUpdateSensorsInterval = 2000;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
+  const float kEyeCorrFactor = -0.015f;
 
   PsvrControl psvr_control_;
 
@@ -106,6 +110,8 @@ private slots:
   uint64_t current_play_position_; // in ms
   QString last_directory_;
   QString last_file_;
+  QSettings settings_;
+  bool auto_full_screen_;
 
   QString FormatPlayTime(uint64_t value_ms);
   void ShowHelmetState();
