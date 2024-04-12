@@ -55,11 +55,12 @@ vec3 GetBluePosition(vec3 pos) {
 
 void main(void)
 {
-  vec4 scale = vec4(1.0, 0.87, 1.0, 1.0);
+  vec4 screen_scale = vec4(1.0, 0.87, 1.0, 1.0);
 
   position_var = vertex_attr;
-  // scr_pos это позиция точки на экране с учётом "квадратных" пикселей.
-  // т.е. пропорции 1:1
+  // scr_pos это позиция точки на экране с правильными пропорциями:
+  // горизонтальный и вертикальный отрезки одинаковой длины выглядят одинаково
+  // для глаза
   vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
   gl_Position = scr_pos;
 
@@ -85,31 +86,31 @@ void main(void)
     gl_Position = scr_pos * distorsion;
   }
 
-  // Scale compensation
-  gl_Position *= scale;
+  // Vertial/Horizontal ratio compensation
+  gl_Position *= screen_scale;
+  gl_Position.z = 0.0;
 
   // Compensate chromatic abberation
   float blue_y = -0.015; // 1.0192
   float blue_x = -0.01; // 1.0224
   float green_y = -0.005; // 1.0078
   float green_x = -0.004; // 1.0091
-  blue_x_disp = gl_Position.x / gl_Position.z * blue_x;
-  blue_y_disp = gl_Position.y / gl_Position.z * blue_y;
-  green_x_disp = gl_Position.x / gl_Position.z * green_x;
-  green_y_disp = gl_Position.y / gl_Position.z * green_y;
+  blue_x_disp = scr_pos.x / scr_pos.w * blue_x;
+  blue_y_disp = scr_pos.y / scr_pos.w * blue_y;
+  green_x_disp = scr_pos.x / scr_pos.w * green_x;
+  green_y_disp = scr_pos.y / scr_pos.w * green_y;
 
 
-  float info_x_scale = -1.0;
-  float info_y_scale = -1.0;
-  info_red_position = scr_pos.xyz;
-  info_red_position.x /= info_red_position.z * info_x_scale;
-  info_red_position.y /= info_red_position.z * info_y_scale;
+  float info_scale = 2.0;
+  info_red_position = scr_pos.xyz / scr_pos.w;
+  info_red_position.x /= info_scale;
+  info_red_position.y /= info_scale * -1.0;
   info_red_position.z = 1.0;
   info_green_position = GetGreenPosition(info_red_position);
   info_blue_position = GetBluePosition(info_red_position);
 
-  info_red_position.x += vertex_x_disp;
-  info_green_position.x += vertex_x_disp;
-  info_blue_position.x += vertex_x_disp;
+  info_red_position.x -= vertex_x_disp;
+  info_green_position.x -= vertex_x_disp;
+  info_blue_position.x -= vertex_x_disp;
   position_var.x -= vertex_x_disp;
 }
