@@ -338,7 +338,8 @@ void HMDWidget::RenderEye(int eye)
 
 	QMatrix4x4 projection_matrix;
 	projection_matrix.perspective(fov, ((float)(w/2)) / (float)h, 0.1f, 100.0f);
-	sphere_shader->setUniformValue("modelview_projection_uni", projection_matrix * modelview_matrix);
+
+  sphere_shader->setUniformValue("modelview_projection_uni", modelview_matrix * projection_matrix);
 
 	sphere_shader->setUniformValue("tex_uni", 0);
   sphere_shader->setUniformValue("tex_info", 1);
