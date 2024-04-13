@@ -101,7 +101,7 @@ vec4 GetSphereColor(vec3 position) {
 
 vec4 GetInfoColor(vec3 pos) {
   vec4 info_color = vec4(0, 0, 0, 0);
-  vec2 pos2 = pos.xy + vec2(0.5, 0.5);
+  vec2 pos2 = (pos.xy + vec2(1.0, 1.0)) * vec2(0.5, 0.5);
   if (pos2.x > 0 && pos2.x < 1 && pos2.y > 0 && pos2.y < 1) {
     info_color = texture(tex_info, pos2);
   }

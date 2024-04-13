@@ -56,6 +56,7 @@ vec3 GetBluePosition(vec3 pos) {
 void main(void)
 {
   vec4 screen_scale = vec4(1.0, 0.87, 1.0, 1.0);
+  float disp_scale = 0.85;
 
   position_var = vertex_attr;
   // scr_pos это позиция точки на экране с правильными пропорциями:
@@ -101,7 +102,7 @@ void main(void)
   green_y_disp = scr_pos.y / scr_pos.w * green_y;
 
 
-  float info_scale = 2.0;
+  float info_scale = 1.0;
   info_red_position = scr_pos.xyz / scr_pos.w;
   info_red_position.x /= info_scale;
   info_red_position.y /= info_scale * -1.0;
@@ -112,5 +113,5 @@ void main(void)
   info_red_position.x -= vertex_x_disp;
   info_green_position.x -= vertex_x_disp;
   info_blue_position.x -= vertex_x_disp;
-  position_var.x -= vertex_x_disp;
+  position_var.x -= vertex_x_disp * disp_scale;
 }
