@@ -114,9 +114,12 @@ class MainWindow : public QMainWindow
   QSettings settings_;
   bool auto_full_screen_;
   int horizont_level_;
+  float fov_; //! Угол обзора
 
   QString FormatPlayTime(uint64_t value_ms);
   void ShowHelmetState();
+
+  void UpdateFov();
 
 
   QTimer update_timer_;

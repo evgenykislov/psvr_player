@@ -40,7 +40,9 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 	hmd_window = 0;
 	hid_device_infos = 0;
 
-	ui->setupUi(this);
+  fov_ = settings_.value("fov", 80).toFloat();
+
+  ui->setupUi(this);
 
   installEventFilter(&key_filter_);
   grabKeyboard();
@@ -95,6 +97,8 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   update_timer_.setInterval(std::chrono::milliseconds(kUpdateSensorsInterval));
   update_timer_.start();
 
+  ui->FOVDoubleSpinBox->setValue(fov_);
+
   ShowHelmetState();
 }
 
@@ -117,8 +121,7 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 	if(!hmd_window)
 		return;
 		
-	ui->FOVDoubleSpinBox->setValue(hmd_window->GetHMDWidget()->GetFOV());
-
+  UpdateFov();
 
 	HMDWidget *hmd_widget = hmd_window->GetHMDWidget();
 
@@ -173,10 +176,14 @@ void MainWindow::PSVRUpdate()
 	//ui->DebugLabel->setText(QString::asprintf("%d\t%d\t%d", psvr->GetAccelerationX(), psvr->GetAccelerationY(), psvr->GetAccelerationZ()));
 }
 
-void MainWindow::FOVValueChanged(double v)
-{
-	if(hmd_window)
-		hmd_window->GetHMDWidget()->SetFOV((float)v);
+void MainWindow::FOVValueChanged(double v) {
+  float fv = (float)v;
+  if (fov_ == fv) { return; }
+  // Update value
+  fov_ = fv;
+  UpdateFov();
+  settings_.setValue("fov", fov_);
+  settings_.sync();
 }
 
 void MainWindow::ResetView()
@@ -466,6 +473,12 @@ void MainWindow::ShowHelmetState()
 
   ui->SensorsStateLbl->setText(sst);
   ui->ControlStateLbl->setText(cst);
+}
+
+void MainWindow::UpdateFov() {
+  if(hmd_window) {
+    hmd_window->GetHMDWidget()->SetFOV(fov_);
+  }
 }
 
 void MainWindow::on_CalibrationBtn_clicked() {
