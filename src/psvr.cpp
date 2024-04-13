@@ -35,10 +35,12 @@ int16_t read_int16(unsigned char *buffer, int offset);
 #define ACCELERATION_COEF 0.00003125f
 
 PsvrSensors::PsvrSensors(): x_angle_summ(0.0), y_angle_summ(0.0), z_angle_summ(0.0),
-    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0), run_reading_(false) {
+    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0), horizont_level_(0),
+    run_reading_(false) {
   device_ = 0;
 	memset(buffer, 0, sizeof(buffer));
 	modelview_matrix.setToIdentity();
+  modelview_matrix.rotate(-horizont_level_, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
 }
 
 PsvrSensors::~PsvrSensors()
@@ -149,6 +151,7 @@ void PsvrSensors::ResetView()
 {
   std::lock_guard<std::mutex> locker(matrix_lock_);
   modelview_matrix.setToIdentity();
+  modelview_matrix.rotate(-horizont_level_, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
 }
 
 void PsvrSensors::GetModelViewMatrix(QMatrix4x4& matrix) {
@@ -198,6 +201,11 @@ bool PsvrSensors::IsCalibrationCompleted()
   locker.unlock();
 
   return true;
+}
+
+void PsvrSensors::SetHorizontLevel(int angle) {
+  horizont_level_ = angle; // TODO Synchronize??
+  ResetView();
 }
 
 std::string PsvrSensors::GetSensorDevice() {

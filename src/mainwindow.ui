@@ -491,6 +491,30 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Horizont</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="HorizontSpinBox">
+           <property name="minimum">
+            <number>-50</number>
+           </property>
+           <property name="maximum">
+            <number>20</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>degr.</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -556,9 +580,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>HorizontSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnHorizontChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>551</x>
+     <y>694</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>408</x>
+     <y>377</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>OnEyesCorrChanged(int)</slot>
   <slot>OnAutoFullScreenChanged(int)</slot>
+  <slot>OnHorizontChanged(int)</slot>
  </slots>
 </ui>

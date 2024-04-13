@@ -64,6 +64,8 @@ class PsvrSensors: public QObject
     void CancelCalibration();
     bool IsCalibrationCompleted();
 
+    void SetHorizontLevel(int angle);
+
  signals:
   void SensorUpdate();
 
@@ -87,6 +89,8 @@ class PsvrSensors: public QObject
   double dx_angle;
   double dy_angle;
   double dz_angle;
+
+  int horizont_level_;
 
   std::mutex angle_lock_;
   std::mutex matrix_lock_;

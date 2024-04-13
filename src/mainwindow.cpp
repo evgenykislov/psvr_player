@@ -32,7 +32,7 @@
 MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
     current_play_position_(0), settings_("psvr_player.conf", QSettings::IniFormat),
-    auto_full_screen_(false)
+    auto_full_screen_(false), horizont_level_(0)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -161,6 +161,10 @@ void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
 
   auto_full_screen_ = settings_.value("auto_full_screen", true).toBool();
   ui->AutoFullScreenChk->setChecked(auto_full_screen_);
+
+  auto hl = settings_.value("horizont_level", 0).toInt();
+  ui->HorizontSpinBox->setValue(hl);
+  OnHorizontChanged(hl);
 }
 
 
@@ -487,4 +491,11 @@ void MainWindow::OnAutoFullScreenChanged(int value) {
   auto_full_screen_ = value != 0;
   settings_.setValue("auto_full_screen", auto_full_screen_);
   settings_.sync();
+}
+
+void MainWindow::OnHorizontChanged(int value) {
+  horizont_level_ = value;
+  settings_.setValue("horizont_level", horizont_level_);
+  settings_.sync();
+  psvr->SetHorizontLevel(horizont_level_);
 }
