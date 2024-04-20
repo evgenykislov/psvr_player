@@ -39,7 +39,7 @@ PsvrSensors::PsvrSensors(): x_velo_(0.0), y_velo_(0.0), z_velo_(0.0),
     run_reading_(false) {
   device_ = 0;
 	memset(buffer, 0, sizeof(buffer));
-  ResetView();
+  ResetView(false);
 }
 
 PsvrSensors::~PsvrSensors()
@@ -115,7 +115,7 @@ bool PsvrSensors::Read(int timeout)
   if (last_reading_ == decltype(last_reading_)()) {
     // last_reading_ isn't valid. reset view and store current value
     last_reading_ = ct;
-    ResetView();
+    ResetView(false);
     return true;
   }
 
@@ -137,20 +137,11 @@ bool PsvrSensors::Read(int timeout)
   y_angle_ += delta_y_angle;
   z_angle_ += delta_z_angle;
 
-  // TODO DEBUG
-  static unsigned int dcounter = 0;
-  ++dcounter;
-  if (dcounter > 1000) {
-    dcounter = 0;
-    qDebug() << "Current angle x, y, z: " << x_angle_ << ", " <<
-        y_angle_ << ", " << z_angle_;
-  }
-
   alocker.unlock();
   return true;
 }
 
-void PsvrSensors::ResetView()
+void PsvrSensors::ResetView(bool apply_compensation)
 {
   auto ct = std::chrono::steady_clock::now();
   std::lock_guard<std::mutex> lk(angle_lock_);
@@ -160,12 +151,14 @@ void PsvrSensors::ResetView()
     // Calculates compensation
     double ims = std::chrono::duration_cast<std::chrono::microseconds>
         (ct - last_reset_view_).count() * 0.001;
-    double extra_x_velo = x_angle_ / ims;
-    double extra_y_velo = y_angle_ / ims;
-    double extra_z_velo = z_angle_ / ims;
-    x_velo_ = x_velo_ + extra_x_velo * kCompensationRough;
-    y_velo_ = y_velo_ + extra_y_velo * kCompensationRough;
-    z_velo_ = z_velo_ + extra_z_velo * kCompensationRough;
+    if (apply_compensation && (ims > kMinimumCompensationIntervalMs)) {
+      double extra_x_velo = x_angle_ / ims;
+      double extra_y_velo = y_angle_ / ims;
+      double extra_z_velo = z_angle_ / ims;
+      x_velo_ = x_velo_ + extra_x_velo * kCompensationRough;
+      y_velo_ = y_velo_ + extra_y_velo * kCompensationRough;
+      z_velo_ = z_velo_ + extra_z_velo * kCompensationRough;
+    }
     last_reset_view_ = ct;
   }
 

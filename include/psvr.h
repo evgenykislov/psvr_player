@@ -49,7 +49,7 @@ class PsvrSensors: public QObject
 
 		bool Read(int timeout);
 
-		void ResetView();
+    void ResetView(bool apply_compensation);
 
     /*! Выдаёт матрицу разворота */
     void GetModelViewMatrix(QMatrix4x4& matrix);
@@ -65,6 +65,7 @@ class PsvrSensors: public QObject
  private:
   const int kReadIntervalMcs = 500;
   const int kReadTimeoutMs = 1; //!< Timeout for reading sensors from hid device. Using "-1" can cause hangup.
+  const int kMinimumCompensationIntervalMs = 5000; //!< Minimal time for applying compensation algorithm
   const unsigned short kPsvrVendorID = 0x054c;
   const unsigned short kPsvrProductID = 0x09af;
   const char kPsvrSensorInterface[4] = ":04";

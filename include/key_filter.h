@@ -36,6 +36,7 @@ class KeyFilter: public QObject {
    void MakeStep(int move_ms);
    void ResetView();
    void FullScreen();
+   void CompensateView();
 };
 
 

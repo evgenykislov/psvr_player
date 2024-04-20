@@ -68,22 +68,6 @@ void HMDWindow::SetEyesDistance(float disp) {
   hmd_widget->SetEyesDistance(disp);
 }
 
-void HMDWindow::keyPressEvent(QKeyEvent *event)
-{
-	switch(event->key())
-	{
-		case Qt::Key_R:
-			psvr->ResetView();
-			break;
-		case Qt::Key_F11:
-      ChangeFullScreen();
-			break;
-		default:
-			QMainWindow::keyPressEvent(event);
-			break;
-
-	}
-}
 
 void HMDWindow::closeEvent(QCloseEvent *event)
 {

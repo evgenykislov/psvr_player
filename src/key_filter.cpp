@@ -44,12 +44,12 @@ KeyEvent g_keys[] = {
   // Reset view
   {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
   {Qt::Key_Up,    true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
-  {Qt::Key_Down,  true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
+  {Qt::Key_Down,  true,  false, false, [](KeyFilter* kf){ emit kf->CompensateView(); }},
   // Full screen
   {Qt::Key_F11,   false, false, false, [](KeyFilter* kf){ emit kf->FullScreen(); }}
 };
 
-bool KeyFilter::eventFilter(QObject*, QEvent* event) {
+bool KeyFilter::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() == QEvent::KeyPress) {
     QKeyEvent* ke = static_cast<QKeyEvent*>(event);
     auto key = ke->key();

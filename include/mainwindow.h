@@ -62,7 +62,8 @@ class MainWindow : public QMainWindow
 		void PSVRUpdate();
 		void FOVValueChanged(double v);
 
-		void ResetView();
+    void ResetView();
+    void CompensateView();
 
 		void OpenVideoFile();
 
@@ -90,7 +91,6 @@ class MainWindow : public QMainWindow
     void UpdateTimer();
 
 	protected:
-		void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
  private slots:
