@@ -41,18 +41,13 @@ set(SOURCE_FILES
   include/psvr_control.h
   src/psvr_control.cpp
   include/key_filter.h
-  src/key_filter.cpp
-  rotatecalibrationdlg.h
-  rotatecalibrationdlg.cpp)
+  src/key_filter.cpp)
 
 set(UI_FILES
-  src/mainwindow.ui
-  rotatecalibrationdlg.ui)
+  src/mainwindow.ui)
 
 set(QRC_FILES
   resources.qrc)
-
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/project_version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/project_version.h")
 
 add_executable(${PROJECT_NAME} ${UI_FILES} ${SOURCE_FILES}  ${QRC_FILES})
 

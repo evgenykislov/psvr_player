@@ -34,13 +34,12 @@ int16_t read_int16(unsigned char *buffer, int offset);
 
 #define ACCELERATION_COEF 0.00003125f
 
-PsvrSensors::PsvrSensors(): x_angle_summ(0.0), y_angle_summ(0.0), z_angle_summ(0.0),
-    dx_angle(0.0), dy_angle(0.0), dz_angle(0.0), horizont_level_(0),
+PsvrSensors::PsvrSensors(): x_velo_(0.0), y_velo_(0.0), z_velo_(0.0),
+    x_angle_(0.0), y_angle_(0.0), z_angle_(0.0), horizont_level_(0),
     run_reading_(false) {
   device_ = 0;
 	memset(buffer, 0, sizeof(buffer));
-	modelview_matrix.setToIdentity();
-  modelview_matrix.rotate(-horizont_level_, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
+  ResetView(false);
 }
 
 PsvrSensors::~PsvrSensors()
@@ -114,8 +113,9 @@ bool PsvrSensors::Read(int timeout)
   }
 
   if (last_reading_ == decltype(last_reading_)()) {
+    // last_reading_ isn't valid. reset view and store current value
     last_reading_ = ct;
-    ResetView();
+    ResetView(false);
     return true;
   }
 
@@ -125,88 +125,80 @@ bool PsvrSensors::Read(int timeout)
 
   // printf("Read sensors in interval %.1f\n", ims);
 
-  x_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
-  y_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
-  z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
+  int16_t y_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
+  int16_t x_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
+  int16_t z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
 
   std::unique_lock<std::mutex> alocker(angle_lock_);
-  double x_angle = (-x_acc * ACCELERATION_COEF - dx_angle) * ims;
-  double y_angle = (-y_acc * ACCELERATION_COEF - dy_angle) * ims;
-  double z_angle = (z_acc * ACCELERATION_COEF - dz_angle) * ims;
-  x_angle_summ += x_angle;
-  y_angle_summ += y_angle;
-  z_angle_summ += z_angle;
+  double delta_x_angle = (-x_acc * ACCELERATION_COEF - x_velo_) * ims;
+  double delta_y_angle = (-y_acc * ACCELERATION_COEF - y_velo_) * ims;
+  double delta_z_angle = (-z_acc * ACCELERATION_COEF - z_velo_) * ims;
+  x_angle_ += delta_x_angle;
+  y_angle_ += delta_y_angle;
+  z_angle_ += delta_z_angle;
+
   alocker.unlock();
-
-  std::unique_lock<std::mutex> mlocker(matrix_lock_);
-  modelview_matrix.rotate(y_angle, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
-  modelview_matrix.rotate(x_angle, QVector3D(0.0, 1.0, 0.0) * modelview_matrix);
-  modelview_matrix.rotate(z_angle, QVector3D(0.0, 0.0, 1.0) * modelview_matrix);
-  mlocker.unlock();
-
   return true;
 }
 
-void PsvrSensors::ResetView()
+void PsvrSensors::ResetView(bool apply_compensation)
 {
-  std::lock_guard<std::mutex> locker(matrix_lock_);
-  modelview_matrix.setToIdentity();
-  modelview_matrix.rotate(-horizont_level_, QVector3D(1.0, 0.0, 0.0) * modelview_matrix);
+  auto ct = std::chrono::steady_clock::now();
+  std::lock_guard<std::mutex> lk(angle_lock_);
+  if (last_reset_view_ == decltype(last_reading_)()) {
+    last_reset_view_ = ct;
+  } else {
+    // Calculates compensation
+    double ims = std::chrono::duration_cast<std::chrono::microseconds>
+        (ct - last_reset_view_).count() * 0.001;
+    if (apply_compensation && (ims > kMinimumCompensationIntervalMs)) {
+      double extra_x_velo = x_angle_ / ims;
+      double extra_y_velo = y_angle_ / ims;
+      double extra_z_velo = z_angle_ / ims;
+      x_velo_ = x_velo_ + extra_x_velo * kCompensationRough;
+      y_velo_ = y_velo_ + extra_y_velo * kCompensationRough;
+      z_velo_ = z_velo_ + extra_z_velo * kCompensationRough;
+    }
+    last_reset_view_ = ct;
+  }
+
+  // Reset view
+  x_angle_ = 0.0;
+  y_angle_ = 0.0;
+  z_angle_ = 0.0;
 }
 
 void PsvrSensors::GetModelViewMatrix(QMatrix4x4& matrix) {
-  std::lock_guard<std::mutex> locker(matrix_lock_);
-  matrix = modelview_matrix;
+  double x, y, z;
+  std::unique_lock<std::mutex> lk(angle_lock_);
+  x = x_angle_;
+  y = y_angle_;
+  z = z_angle_;
+  lk.unlock();
+
+  QMatrix4x4 m;
+  m.setToIdentity();
+  m.rotate(x, 1.0f, 0.0f, 0.0f);
+  m.rotate(y, 0.0f, 1.0f, 0.0f);
+  m.rotate(z, 0.0f, 0.0f, 1.0f);
+
+  matrix = m;
 }
 
-void PsvrSensors::StartCalibration() {
-  std::unique_lock<std::mutex> locker(angle_lock_);
-  dx_angle = 0.0;
-  dy_angle = 0.0;
-  dz_angle = 0.0;
-  x_angle_summ = 0.0;
-  y_angle_summ = 0.0;
-  z_angle_summ = 0.0;
-  locker.unlock();
-  calibration_start_ = std::chrono::steady_clock::now();
+void PsvrSensors::SetVelocity(double xvelocity, double yvelocity, double zvelocity) {
+  std::lock_guard<std::mutex> lk(angle_lock_);
+  x_velo_ = xvelocity;
+  y_velo_ = yvelocity;
+  z_velo_ = zvelocity;
 }
 
-void PsvrSensors::CancelCalibration()
-{
-  calibration_start_ = decltype(calibration_start_)();
+void PsvrSensors::GetVelocity(double& xvelocity, double& yvelocity, double& zvelocity) {
+  std::lock_guard<std::mutex> lk(angle_lock_);
+  xvelocity = x_velo_;
+  yvelocity = y_velo_;
+  zvelocity = z_velo_;
 }
 
-bool PsvrSensors::IsCalibrationCompleted()
-{
-  if (calibration_start_ == decltype(calibration_start_)()) {
-    // There isn't any calibration. Inform about completion
-    return true;
-  }
-
-  auto ct = std::chrono::steady_clock::now();
-
-  double ims = std::chrono::duration_cast<std::chrono::microseconds>
-      (ct - calibration_start_).count() * 0.001;
-  if (ims < kCalibrationInterval) {
-    return false;
-  }
-
-  std::unique_lock<std::mutex> locker(angle_lock_);
-  dx_angle = x_angle_summ / ims;
-  dy_angle = y_angle_summ / ims;
-  dz_angle = z_angle_summ / ims;
-  x_angle_summ = 0.0;
-  y_angle_summ = 0.0;
-  z_angle_summ = 0.0;
-  locker.unlock();
-
-  return true;
-}
-
-void PsvrSensors::SetHorizontLevel(int angle) {
-  horizont_level_ = angle; // TODO Synchronize??
-  ResetView();
-}
 
 std::string PsvrSensors::GetSensorDevice() {
   auto devs = hid_enumerate(kPsvrVendorID, kPsvrProductID);

@@ -25,7 +25,6 @@
 #include "hmdwindow.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "../rotatecalibrationdlg.h"
 
 #include "project_version.h"
 
@@ -45,7 +44,6 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   ui->setupUi(this);
 
   installEventFilter(&key_filter_);
-  grabKeyboard();
 
 	setWindowTitle(windowTitle() + " " + QString(PROJECT_VERSION));
   last_directory_ = QDir::currentPath();
@@ -72,6 +70,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   connect(&key_filter_, SIGNAL(Pause()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(CompensateView()), this, SLOT(CompensateView()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(FullScreen()), this, SLOT(UIPlayerFullScreen()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(Stop()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
 
@@ -100,27 +99,48 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   ui->FOVDoubleSpinBox->setValue(fov_);
 
   ShowHelmetState();
+
+  // Скорости поворота шлема (компенсация)
+  double xv, yv, zv;
+  xv = settings_.value("x_velocity", 0.0).toDouble();
+  yv = settings_.value("y_velocity", 0.0).toDouble();
+  zv = settings_.value("z_velocity", 0.0).toDouble();
+  psvr->SetVelocity(xv, yv, zv);
 }
 
 MainWindow::~MainWindow()
 {
   psvr_control_.CloseDevice();
-  releaseKeyboard();
   removeEventFilter(&key_filter_);
 
 	delete ui;
 
 	if(hid_device_infos)
 		hid_free_enumeration(hid_device_infos);
+
+  if (psvr) {
+    double xv, yv, zv;
+    psvr->GetVelocity(xv, yv, zv);
+    settings_.setValue("x_velocity", xv);
+    settings_.setValue("y_velocity", yv);
+    settings_.setValue("z_velocity", zv);
+  }
 }
 
-void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
+void MainWindow::SetHMDWindow(HMDWindow* hmdwnd)
 {
-	this->hmd_window = hmd_window;
+  if (hmd_window) {
+    // Сначала отвяжем уже привязанное окно (если есть)
+    hmd_window->removeEventFilter(&key_filter_);
+  }
 
-	if(!hmd_window)
-		return;
-		
+  if (!hmdwnd) {
+    return;
+  }
+
+  hmd_window = hmdwnd;
+  hmd_window->installEventFilter(&key_filter_);
+
   UpdateFov();
 
 	HMDWidget *hmd_widget = hmd_window->GetHMDWidget();
@@ -188,7 +208,12 @@ void MainWindow::FOVValueChanged(double v) {
 
 void MainWindow::ResetView()
 {
-	psvr->ResetView();
+  psvr->ResetView(false);
+}
+
+void MainWindow::CompensateView()
+{
+  psvr->ResetView(true);
 }
 
 void MainWindow::OpenVideoFile()
@@ -420,17 +445,6 @@ void MainWindow::UpdateTimer() {
   ShowHelmetState();
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-	if(event->key() == Qt::Key_R)
-	{
-		psvr->ResetView();
-	}
-	else
-	{
-		QMainWindow::keyPressEvent(event);
-	}
-}
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -481,12 +495,6 @@ void MainWindow::UpdateFov() {
   }
 }
 
-void MainWindow::on_CalibrationBtn_clicked() {
-  RotateCalibrationDlg dlg(psvr, this);
-  if (dlg.exec() == QDialog::Accepted) {
-
-  }
-}
 
 void MainWindow::OnEyesCorrChanged(int value)
 {
@@ -510,5 +518,4 @@ void MainWindow::OnHorizontChanged(int value) {
   horizont_level_ = value;
   settings_.setValue("horizont_level", horizont_level_);
   settings_.sync();
-  psvr->SetHorizontLevel(horizont_level_);
 }
