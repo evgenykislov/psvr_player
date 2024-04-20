@@ -518,6 +518,9 @@ void MainWindow::OnAutoFullScreenChanged(int value) {
 
 void MainWindow::OnHorizontChanged(int value) {
   horizont_level_ = value;
+  if (hmd_window) {
+    hmd_window->SetHorizontLevel(value * kHorizontCorrFactor);
+  }
   settings_.setValue("horizont_level", horizont_level_);
   settings_.sync();
 }

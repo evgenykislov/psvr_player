@@ -102,6 +102,7 @@ class MainWindow : public QMainWindow
   const int kUpdateSensorsInterval = 2000;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
   const float kEyeCorrFactor = -0.015f;
+  const float kHorizontCorrFactor = 0.05;
 
   PsvrControl psvr_control_;
 

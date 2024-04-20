@@ -501,13 +501,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>degr.</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>

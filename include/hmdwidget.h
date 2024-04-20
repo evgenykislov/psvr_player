@@ -112,6 +112,8 @@ class HMDWidget : public QOpenGLWidget
     каждый пиксель 4 байта (RGBA) */
     InfoTextureRow* GetInfoData() { return info_texture_array_; }
 
+    void SetHorizontLevel(float horz) { horizont_level_ = horz; }
+
 	protected:
 		void initializeGL() Q_DECL_OVERRIDE;
 		void resizeGL(int w, int h) Q_DECL_OVERRIDE;
@@ -128,6 +130,7 @@ class HMDWidget : public QOpenGLWidget
 
   // TODO Can make faster
   std::atomic<float> eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
+  std::atomic<float> horizont_level_; //!< Смещение горизонта
 
 
   void GenerateCubeVertices();

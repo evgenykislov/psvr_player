@@ -68,6 +68,10 @@ void HMDWindow::SetEyesDistance(float disp) {
   hmd_widget->SetEyesDistance(disp);
 }
 
+void HMDWindow::SetHorizontLevel(float horz) {
+  hmd_widget->SetHorizontLevel(horz);
+}
+
 
 void HMDWindow::closeEvent(QCloseEvent *event)
 {

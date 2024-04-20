@@ -35,8 +35,7 @@ int16_t read_int16(unsigned char *buffer, int offset);
 #define ACCELERATION_COEF 0.00003125f
 
 PsvrSensors::PsvrSensors(): x_velo_(0.0), y_velo_(0.0), z_velo_(0.0),
-    x_angle_(0.0), y_angle_(0.0), z_angle_(0.0), horizont_level_(0),
-    run_reading_(false) {
+    x_angle_(0.0), y_angle_(0.0), z_angle_(0.0), run_reading_(false) {
   device_ = 0;
 	memset(buffer, 0, sizeof(buffer));
   ResetView(false);

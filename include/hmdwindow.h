@@ -48,6 +48,8 @@ class HMDWindow : public QMainWindow
     void ChangeFullScreen();
 
     void SetEyesDistance(float disp);
+    void SetHorizontLevel(float horz);
+
 
 	protected:
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;

@@ -335,7 +335,7 @@ void HMDWidget::RenderEye(int eye)
 
   QMatrix4x4 view;
   psvr->GetModelViewMatrix(view);
-  view.translate(eyedisp, 0.0f, 0.0f);
+  view.translate(eyedisp, horizont_level_, 0.0f);
 
 
 	QMatrix4x4 projection_matrix;

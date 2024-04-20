@@ -87,9 +87,6 @@ class PsvrSensors: public QObject
   double y_angle_;
   double z_angle_;
 
-
-  int horizont_level_;
-
   std::mutex angle_lock_;
 
   std::thread read_thr_;
