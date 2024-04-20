@@ -25,7 +25,6 @@
 #include "hmdwindow.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "../rotatecalibrationdlg.h"
 
 #include "project_version.h"
 
@@ -100,6 +99,13 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
   ui->FOVDoubleSpinBox->setValue(fov_);
 
   ShowHelmetState();
+
+  // Скорости поворота шлема (компенсация)
+  double xv, yv, zv;
+  xv = settings_.value("x_velocity", 0.0).toDouble();
+  yv = settings_.value("y_velocity", 0.0).toDouble();
+  zv = settings_.value("z_velocity", 0.0).toDouble();
+  psvr->SetVelocity(xv, yv, zv);
 }
 
 MainWindow::~MainWindow()
@@ -112,6 +118,14 @@ MainWindow::~MainWindow()
 
 	if(hid_device_infos)
 		hid_free_enumeration(hid_device_infos);
+
+  if (psvr) {
+    double xv, yv, zv;
+    psvr->GetVelocity(xv, yv, zv);
+    settings_.setValue("x_velocity", xv);
+    settings_.setValue("y_velocity", yv);
+    settings_.setValue("z_velocity", zv);
+  }
 }
 
 void MainWindow::SetHMDWindow(HMDWindow *hmd_window)
@@ -481,12 +495,6 @@ void MainWindow::UpdateFov() {
   }
 }
 
-void MainWindow::on_CalibrationBtn_clicked() {
-  RotateCalibrationDlg dlg(psvr, this);
-  if (dlg.exec() == QDialog::Accepted) {
-
-  }
-}
 
 void MainWindow::OnEyesCorrChanged(int value)
 {
@@ -510,5 +518,4 @@ void MainWindow::OnHorizontChanged(int value) {
   horizont_level_ = value;
   settings_.setValue("horizont_level", horizont_level_);
   settings_.sync();
-  psvr->SetHorizontLevel(horizont_level_);
 }

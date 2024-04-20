@@ -36,8 +36,6 @@ class PsvrSensors: public QObject
 
 		unsigned char buffer[PSVR_BUFFER_SIZE];
 
-    QMatrix4x4 modelview_matrix;
-
 	public:
     PsvrSensors();
     ~PsvrSensors();
@@ -53,13 +51,13 @@ class PsvrSensors: public QObject
 
 		void ResetView();
 
+    /*! Выдаёт матрицу разворота */
     void GetModelViewMatrix(QMatrix4x4& matrix);
 
-    void StartCalibration();
-    void CancelCalibration();
-    bool IsCalibrationCompleted();
+    /*! Выставляет сохранённые значения скорости шлема */
+    void SetVelocity(double xvelocity, double yvelocity, double zvelocity);
 
-    void SetHorizontLevel(int angle);
+    void GetVelocity(double& xvelocity, double& yvelocity, double& zvelocity);
 
  signals:
   void SensorUpdate();
@@ -70,32 +68,28 @@ class PsvrSensors: public QObject
   const unsigned short kPsvrVendorID = 0x054c;
   const unsigned short kPsvrProductID = 0x09af;
   const char kPsvrSensorInterface[4] = ":04";
-  const int kCalibrationInterval = 10000;
 
   // Compensation
-  const double kCompensationSmooth = 0.3;
+  const double kCompensationRough = 0.3;
   std::chrono::steady_clock::time_point last_reading_; //!< time of last read/rotate operation. Or default value if not valid. Changed in PsvrSensors::Read only.
-  std::chrono::steady_clock::time_point calibration_start_; //!< Time of last reset operation
-  double x_angle_summ;
-  double y_angle_summ;
-  double z_angle_summ;
+  std::chrono::steady_clock::time_point last_reset_view_;
 
-  // Current angle speed (per milliseconds) for axis (compensation)
-  double dx_angle;
-  double dy_angle;
-  double dz_angle;
+  // Current angle speed (degrees per milliseconds) for axis compensation
+  double x_velo_;
+  double y_velo_;
+  double z_velo_;
 
   // Текущие углы поворота шлема относительно пользователя
-  // Т.е. если польователь повернул голову направо, то
-  double x_angle;
-  double y_angle;
-  double z_angle;
+  // Т.е. если польователь повернул голову направо, то y_angle будет положительный.
+  // Подробнее про систему координат написано в docs/Координаты.txt
+  double x_angle_;
+  double y_angle_;
+  double z_angle_;
 
 
   int horizont_level_;
 
   std::mutex angle_lock_;
-  std::mutex matrix_lock_;
 
   std::thread read_thr_;
   std::atomic_bool run_reading_;

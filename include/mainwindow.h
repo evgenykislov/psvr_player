@@ -94,7 +94,6 @@ class MainWindow : public QMainWindow
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
  private slots:
-  void on_CalibrationBtn_clicked();
   void OnEyesCorrChanged(int);
   void OnAutoFullScreenChanged(int);
   void OnHorizontChanged(int);

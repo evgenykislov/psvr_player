@@ -26,7 +26,7 @@
          <x>0</x>
          <y>0</y>
          <width>783</width>
-         <height>436</height>
+         <height>454</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -45,7 +45,7 @@
            <enum>QFrame::Plain</enum>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Playstation VR Player&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Key shortcuts:&lt;/span&gt;&lt;br/&gt;Space: Play/Pause&lt;br/&gt;Ctrl+Space: Stop&lt;br/&gt;Left / Right: -5 sec / +5 sec&lt;br/&gt;Ctrl+Left / Ctrl+Rigth: - 1 min / +1 min&lt;br/&gt;Shift+Left / Shift+Rigth: -10 min / +10 min&lt;br/&gt;Ctrl+Up or Ctrl+Down: Reset View&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Instructions:&lt;br/&gt;&lt;/span&gt;First, connect your Playstation VR headset to the PC: connect processing unit HDMI and UDB ports to PC GPU.&lt;br/&gt;If the list under &amp;quot;PSVR&amp;quot; is empty, press &amp;quot;Refresh&amp;quot;. There should be multiple devices. If rotational tracking is not working after you connected to one, disconnect and try another one. If there is a device called &amp;quot;Sony PS VR Sensor&amp;quot;, you should try this first.&lt;br/&gt;The video will play on the second window. If you have set your headset screen to be side by side with your regular monitor, move the window to the headset screen and press F11 once to make it fullscreen.&lt;br/&gt;Then, you can simply open a video file and it will be played on the headset.&lt;br/&gt;The view can be reset by pressing R.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning:&lt;/span&gt;&lt;br/&gt;This program uses only a roughly estimated symmetrical field of view and does not apply any lens correction distortion. This means, the projection in the headset is not perfectly correct, which can lead to motion sickness. You can adjust the FOV with the spinner below if you want.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Playstation VR Player&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Key shortcuts:&lt;/span&gt;&lt;br/&gt;Space: Play/Pause&lt;br/&gt;Ctrl+Space: Stop&lt;br/&gt;Left / Right: -5 sec / +5 sec&lt;br/&gt;Ctrl+Left / Ctrl+Rigth: - 1 min / +1 min&lt;br/&gt;Shift+Left / Shift+Rigth: -10 min / +10 min&lt;br/&gt;Ctrl+Up: Reset View&lt;br/&gt;Ctrl+Down: ResetView + Compensation&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Instructions:&lt;br/&gt;&lt;/span&gt;First, connect your Playstation VR headset to the PC: connect processing unit HDMI and UDB ports to PC GPU.&lt;br/&gt;If the list under &amp;quot;PSVR&amp;quot; is empty, press &amp;quot;Refresh&amp;quot;. There should be multiple devices. If rotational tracking is not working after you connected to one, disconnect and try another one. If there is a device called &amp;quot;Sony PS VR Sensor&amp;quot;, you should try this first.&lt;br/&gt;The video will play on the second window. If you have set your headset screen to be side by side with your regular monitor, move the window to the headset screen and press F11 once to make it fullscreen.&lt;br/&gt;Then, you can simply open a video file and it will be played on the headset.&lt;br/&gt;The view can be reset by pressing R.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning:&lt;/span&gt;&lt;br/&gt;This program uses only a roughly estimated symmetrical field of view and does not apply any lens correction distortion. This means, the projection in the headset is not perfectly correct, which can lead to motion sickness. You can adjust the FOV with the spinner below if you want.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -76,13 +76,6 @@
         <widget class="QLabel" name="ControlStateLbl">
          <property name="text">
           <string>Control - OK</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="CalibrationBtn">
-         <property name="text">
-          <string>Calibrate Sensors</string>
          </property>
         </widget>
        </item>
