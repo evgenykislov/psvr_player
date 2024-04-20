@@ -20,7 +20,8 @@
 
 uniform mat4 modelview_projection_uni;
 
-//!< Смещение изображения к центру в размерности изображения на один глаз. Типовое значение 0.01
+/*! Смещение изображения к центру в размерности изображения для компенсации
+глазного расстояния. Такое же смещение внесено в modelview_projection_uni */
 uniform float vertex_x_disp;
 
 in vec3 vertex_attr;
@@ -113,5 +114,4 @@ void main(void)
   info_red_position.x -= vertex_x_disp;
   info_green_position.x -= vertex_x_disp;
   info_blue_position.x -= vertex_x_disp;
-  position_var.x -= vertex_x_disp * disp_scale;
 }

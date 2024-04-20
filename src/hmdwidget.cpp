@@ -333,13 +333,15 @@ void HMDWidget::RenderEye(int eye)
 
 	sphere_shader->bind();
 
-	QMatrix4x4 modelview_matrix;
-  psvr->GetModelViewMatrix(modelview_matrix);
+  QMatrix4x4 view;
+  psvr->GetModelViewMatrix(view);
+  view.translate(eyedisp, 0.0f, 0.0f);
+
 
 	QMatrix4x4 projection_matrix;
 	projection_matrix.perspective(fov, ((float)(w/2)) / (float)h, 0.1f, 100.0f);
 
-  sphere_shader->setUniformValue("modelview_projection_uni", modelview_matrix * projection_matrix);
+  sphere_shader->setUniformValue("modelview_projection_uni", view * projection_matrix);
 
 	sphere_shader->setUniformValue("tex_uni", 0);
   sphere_shader->setUniformValue("tex_info", 1);
