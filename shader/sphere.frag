@@ -109,6 +109,38 @@ vec4 GetInfoColor(vec3 pos) {
 }
 
 
+/*! Отрисовка отладочного куба.
+Цвет вне куба (-1 - +1 по всем осям) - зелёный;
+Цвет ребёр - красный
+Цвет граней и внутри - синий */
+vec4 GetCubeColor(vec3 pos) {
+  const float wire_thick = 0.05;
+
+  const float board = 1.0 - wire_thick;
+  const float exboard = 1.0 + wire_thick;
+
+  if (pos.x < -exboard || pos.x > exboard ||
+      pos.y < -exboard || pos.y > exboard ||
+      pos.z < -exboard || pos.z > exboard) {
+    return vec4(0, 1, 0, 1);
+  }
+
+  if ((pos.x < -board || pos.x > board) &&
+      (pos.y < -board || pos.y > board)) {
+    return vec4(1, 0, 0, 1);
+  }
+  if ((pos.x < -board || pos.x > board) &&
+      (pos.z < -board || pos.z > board)) {
+    return vec4(1, 0, 0, 1);
+  }
+  if ((pos.y < -board || pos.y > board) &&
+      (pos.z < -board || pos.z > board)) {
+    return vec4(1, 0, 0, 1);
+  }
+
+  return vec4(0, 0, (pos.z + 1.0) * 0.5, 1.0);
+}
+
 
 void main(void)
 {
