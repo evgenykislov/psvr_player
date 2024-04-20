@@ -114,6 +114,7 @@ bool PsvrSensors::Read(int timeout)
   }
 
   if (last_reading_ == decltype(last_reading_)()) {
+    // last_reading_ isn't valid. reset view and store current value
     last_reading_ = ct;
     ResetView();
     return true;
@@ -125,17 +126,27 @@ bool PsvrSensors::Read(int timeout)
 
   // printf("Read sensors in interval %.1f\n", ims);
 
-  x_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
-  y_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
-  z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
+  int16_t y_acc = read_int16(buffer, 20) + read_int16(buffer, 36);
+  int16_t x_acc = read_int16(buffer, 22) + read_int16(buffer, 38);
+  int16_t z_acc = read_int16(buffer, 24) + read_int16(buffer, 40);
 
   std::unique_lock<std::mutex> alocker(angle_lock_);
   double x_angle = (-x_acc * ACCELERATION_COEF - dx_angle) * ims;
   double y_angle = (-y_acc * ACCELERATION_COEF - dy_angle) * ims;
-  double z_angle = (z_acc * ACCELERATION_COEF - dz_angle) * ims;
+  double z_angle = (-z_acc * ACCELERATION_COEF - dz_angle) * ims;
   x_angle_summ += x_angle;
   y_angle_summ += y_angle;
   z_angle_summ += z_angle;
+
+  // TODO DEBUG
+  static unsigned int dcounter = 0;
+  ++dcounter;
+  if (dcounter > 1000) {
+    dcounter = 0;
+    qDebug() << "Current angle x, y, z: " << x_angle_summ << ", " <<
+        y_angle_summ << ", " << z_angle_summ;
+  }
+
   alocker.unlock();
 
   std::unique_lock<std::mutex> mlocker(matrix_lock_);
@@ -156,6 +167,7 @@ void PsvrSensors::ResetView()
 
 void PsvrSensors::GetModelViewMatrix(QMatrix4x4& matrix) {
   std::lock_guard<std::mutex> locker(matrix_lock_);
+  QMatrix4x4 modelview_matrix;
   matrix = modelview_matrix;
 }
 

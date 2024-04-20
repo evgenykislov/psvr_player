@@ -35,9 +35,8 @@ class PsvrSensors: public QObject
     hid_device* device_;
 
 		unsigned char buffer[PSVR_BUFFER_SIZE];
-		short x_acc, y_acc, z_acc;
 
-		QMatrix4x4 modelview_matrix;
+    QMatrix4x4 modelview_matrix;
 
 	public:
     PsvrSensors();
@@ -53,10 +52,6 @@ class PsvrSensors: public QObject
 		bool Read(int timeout);
 
 		void ResetView();
-
-		short GetAccelerationX(void)	{ return x_acc; }
-		short GetAccelerationY(void)	{ return y_acc; }
-		short GetAccelerationZ(void)	{ return z_acc; }
 
     void GetModelViewMatrix(QMatrix4x4& matrix);
 
@@ -79,7 +74,7 @@ class PsvrSensors: public QObject
 
   // Compensation
   const double kCompensationSmooth = 0.3;
-  std::chrono::steady_clock::time_point last_reading_; //!< time of last read/rotate operation. Or default value if not valid
+  std::chrono::steady_clock::time_point last_reading_; //!< time of last read/rotate operation. Or default value if not valid. Changed in PsvrSensors::Read only.
   std::chrono::steady_clock::time_point calibration_start_; //!< Time of last reset operation
   double x_angle_summ;
   double y_angle_summ;
@@ -89,6 +84,13 @@ class PsvrSensors: public QObject
   double dx_angle;
   double dy_angle;
   double dz_angle;
+
+  // Текущие углы поворота шлема относительно пользователя
+  // Т.е. если польователь повернул голову направо, то
+  double x_angle;
+  double y_angle;
+  double z_angle;
+
 
   int horizont_level_;
 
