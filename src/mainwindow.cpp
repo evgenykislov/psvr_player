@@ -298,6 +298,7 @@ void MainWindow::PlayerPlaying()
   if (auto_full_screen_) {
     if (hmd_window) {
       hmd_window->SwitchFullScreen(true);
+      hmd_window->activateWindow();
     }
   }
 
@@ -376,6 +377,7 @@ void MainWindow::UIPlayerMakeStep(int move_ms) {
 void MainWindow::UIPlayerFullScreen() {
   if(hmd_window) {
     hmd_window->ChangeFullScreen();
+    hmd_window->activateWindow();
   }
 }
 
