@@ -53,7 +53,8 @@ class MainWindow : public QMainWindow
 		QTimer player_position_delay_timer;
 
 	public:
-    MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
+    MainWindow(VideoPlayer *video_player, PsvrSensors *psvr,
+        PsvrControl* psvr_control, QWidget *parent = 0);
 		~MainWindow();
 
 		void SetHMDWindow(HMDWindow *hmd_window);
@@ -67,14 +68,12 @@ class MainWindow : public QMainWindow
 
 		void OpenVideoFile();
 
-		void UIPlayerPlay();
 		void UIPlayerStop();
     void UIPlayerStopPlay();
 		void UIPlayerPositionChanged(int value);
 
 		void UIPlayerPositionChangedDelayed();
 
-    void UIPlayerMakeStep(int move_ms);
     void UIPlayerFullScreen();
 
 		void PlayerPlaying();
@@ -98,13 +97,15 @@ class MainWindow : public QMainWindow
   void OnAutoFullScreenChanged(int);
   void OnHorizontChanged(int);
 
+
+
  private:
   const int kUpdateSensorsInterval = 2000;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
   const float kEyeCorrFactor = -0.015f;
   const float kHorizontCorrFactor = 0.05;
 
-  PsvrControl psvr_control_;
+  PsvrControl* psvr_control_;
 
   KeyFilter key_filter_;
   uint64_t media_duration_; // in ms

@@ -32,15 +32,13 @@ struct KeyEvent {
 };
 
 KeyEvent g_keys[] = {
-  {Qt::Key_Space, false, false, false, [](KeyFilter* kf){ emit kf->Pause(); }},
-  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->Stop(); }},
-  // Fast forward
-  {Qt::Key_Left,  false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(-10000); }},
-  {Qt::Key_Right, false, false, false, [](KeyFilter* kf){ emit kf->MakeStep(10000); }},
-  {Qt::Key_Left,  true,  false, false, [](KeyFilter* kf){ emit kf->MakeStep(-60000); }},
-  {Qt::Key_Right, true,  false, false, [](KeyFilter* kf){ emit kf->MakeStep(60000); }},
-  {Qt::Key_Left,  false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(-600000); }},
-  {Qt::Key_Right, false, true,  false, [](KeyFilter* kf){ emit kf->MakeStep(600000); }},
+  {Qt::Key_Space, false, false, false, [](KeyFilter* kf){ emit kf->Select(); }},
+  {Qt::Key_Space, true,  false, false, [](KeyFilter* kf){ emit kf->FullStop(); }},
+  // Directions
+  {Qt::Key_Left,  false, false, false, [](KeyFilter* kf){ emit kf->Left(); }},
+  {Qt::Key_Right, false, false, false, [](KeyFilter* kf){ emit kf->Right(); }},
+  {Qt::Key_Up,  false, false, false, [](KeyFilter* kf){ emit kf->Up(); }},
+  {Qt::Key_Down, false, false, false, [](KeyFilter* kf){ emit kf->Down(); }},
   // Reset view
   {Qt::Key_R,     false, false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
   {Qt::Key_Up,    true,  false, false, [](KeyFilter* kf){ emit kf->ResetView(); }},
@@ -49,7 +47,7 @@ KeyEvent g_keys[] = {
   {Qt::Key_F11,   false, false, false, [](KeyFilter* kf){ emit kf->FullScreen(); }}
 };
 
-bool KeyFilter::eventFilter(QObject* obj, QEvent* event) {
+bool KeyFilter::eventFilter(QObject*, QEvent* event) {
   if (event->type() == QEvent::KeyPress) {
     QKeyEvent* ke = static_cast<QKeyEvent*>(event);
     auto key = ke->key();

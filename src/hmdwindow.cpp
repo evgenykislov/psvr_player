@@ -23,10 +23,12 @@
 #include <QKeyEvent>
 
 #include "psvr.h"
+#include "psvr_control.h"
 #include "hmdwindow.h"
 
-HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent) : QMainWindow(parent)
-{
+HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr,
+    PsvrControl* psvr_control, QWidget *parent): QMainWindow(parent),
+    psvr_control_(psvr_control) {
 	this->video_player = video_player;
 	this->psvr = psvr;
 
@@ -39,8 +41,11 @@ HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 	hmd_widget = new HMDWidget(video_player, psvr);
   info_data_ = hmd_widget->GetInfoData();
   setCentralWidget(hmd_widget);
+  ShowMenu();
 
-  LoadTestInfo();
+//  LoadTestInfo();
+
+  connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
 }
 
 HMDWindow::~HMDWindow()
@@ -93,3 +98,124 @@ void HMDWindow::LoadTestInfo() {
   }
 }
 
+
+void HMDWindow::OnUp() {
+  info_scr_.DoUp();
+  UpdateInformation();
+}
+
+void HMDWindow::OnDown() {
+  info_scr_.DoDown();
+  UpdateInformation();
+}
+
+void HMDWindow::OnLeft() {
+  info_scr_.DoLeft();
+  UpdateInformation();
+}
+
+void HMDWindow::OnRight() {
+  info_scr_.DoRight();
+  UpdateInformation();
+}
+
+void HMDWindow::OnSelect() {
+  if (video_player->IsPlaying()) {
+    video_player->Pause();
+    ShowMenu();
+  } else {
+    int value;
+
+    auto action = info_scr_.DoSelectAndGetAction(value);
+    switch (action) {
+      case InformationScreen::kNoAction: break;
+      case InformationScreen::kPlayAction: ActionPlay(); break;
+      case InformationScreen::kInvertAction: ActionInvert(value); break;
+      default:
+        assert(false);
+    }
+    UpdateInformation();
+  }
+}
+
+
+//void HMDWindow::UIPlayerMakeStep(int move_ms) {
+//  float pos = 0.0f;
+
+
+//  if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
+//    // Goto start
+//  }
+//  else if (media_duration_ <= kBeforeEndInterval) {
+//    // Use default value
+//  }
+//  else if (current_play_position_ + move_ms > (media_duration_ - kBeforeEndInterval)) {
+//    // Stay to before-end position
+//    pos = static_cast<float>(media_duration_ - kBeforeEndInterval) / media_duration_;
+//  }
+//  else {
+//    pos = static_cast<float>(current_play_position_ + move_ms) / media_duration_;
+//  }
+
+//  video_player->SetPosition(pos);
+//}
+
+void HMDWindow::ShowMenu()
+{
+  info_scr_.ShowMenu(true);
+  UpdateInformation();
+}
+
+void HMDWindow::UpdateInformation() {
+  auto scr = info_scr_.GetInfoScr();
+  auto wd = info_scr_.GetInfoScrWidth();
+  auto ht = info_scr_.GetInfoScrHeight();
+  if ((kInfoScrXPos + wd) > HMDWidget::kInfoWidth) {
+    assert(false);
+    return;
+  }
+  if ((kInfoScrYPos + ht) > HMDWidget::kInfoHeight) {
+    assert(false);
+    return;
+  }
+
+  for (size_t y = 0; y < ht; ++y) {
+    for (size_t x = 0; x < wd; ++x) {
+      info_data_[kInfoScrYPos + y][kInfoScrXPos + x] = scr[y * wd + x];
+    }
+  }
+
+  hmd_widget->ForceUpdateInfo();
+}
+
+
+
+void HMDWindow::HideMenu()
+{
+  info_scr_.ShowMenu(false);
+  UpdateInformation();
+}
+
+void HMDWindow::ActionInvert(int value) {
+  hmd_widget->SetInvertStereo(value != 0);
+}
+
+void HMDWindow::ActionPlay() {
+  HideMenu();
+  video_player->Play();
+}
+
+void HMDWindow::PlayerPlaying() {
+  if (!psvr_control_->IsOpened() && !psvr_control_->OpenDevice()) {
+    info_scr_.SetNoVrWarning(true);
+  }
+  else {
+    info_scr_.SetNoVrWarning(false);
+    psvr_control_->SetVRMode(true);
+  }
+  HideMenu();
+
+  // TODO
+//  hmd_window->SwitchFullScreen(true);
+//  hmd_window->activateWindow();
+}
