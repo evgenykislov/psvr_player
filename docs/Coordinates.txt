@@ -1,3 +1,16 @@
+Coordinates:
+
+The psvr sensor uses a right-handed coordinate system when calculating rotations:
+The x-axis:
+- Directed from left to right. The center is 0;
+- a turn on the axis is a nod forward (or head up). A positive direction is a downward nod.
+The y-axis:
+- Is directed from bottom to top;
+- y-axis rotation is a horizontal turn of the head to the left or right. A positive direction is a left-to-right turn.
+The z-axis:
+- Is directed from the front toward us. That is, the negative values in front of us;
+- the axis rotation is a left to right tilt. The positive direction is right-versus-top-left.
+---
 Координаты:
 
 При расчётах поворотов в сенсоре psvr используется правая система координат:
