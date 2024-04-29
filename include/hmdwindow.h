@@ -55,6 +55,10 @@ class HMDWindow : public QMainWindow
     void SetEyesDistance(float disp);
     void SetHorizontLevel(float horz);
 
+    // TODO Set private, fixes update
+    uint64_t media_duration_; // in ms
+    uint64_t current_play_position_; // in ms
+
  public slots:
   void OnUp();
   void OnDown();
@@ -69,10 +73,12 @@ class HMDWindow : public QMainWindow
  private:
   static const size_t kInfoScrXPos = 510;
   static const size_t kInfoScrYPos = 510;
+  const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
 
   HMDWidget::InfoTextureRow* info_data_;
   InformationScreen info_scr_;
   PsvrControl* psvr_control_;
+  bool show_menu_; //!< Признак, что отображается настроечное меню
 
 
   /*! Загрузить тестовую информацию, если она есть */
@@ -85,7 +91,7 @@ class HMDWindow : public QMainWindow
   void ActionInvert(int value);
   void ActionPlay();
 
-  void UIPlayerMakeStep(int move_ms);
+  void PlayerMakeStep(int move_ms);
 
  private slots:
   void PlayerPlaying();

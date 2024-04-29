@@ -100,23 +100,31 @@ void HMDWindow::LoadTestInfo() {
 
 
 void HMDWindow::OnUp() {
-  info_scr_.DoUp();
-  UpdateInformation();
+  if (show_menu_) {
+    info_scr_.DoUp();
+    UpdateInformation();
+  }
 }
 
 void HMDWindow::OnDown() {
-  info_scr_.DoDown();
-  UpdateInformation();
+  if (show_menu_) {
+    info_scr_.DoDown();
+    UpdateInformation();
+  }
 }
 
 void HMDWindow::OnLeft() {
-  info_scr_.DoLeft();
-  UpdateInformation();
+  if (show_menu_) {
+    info_scr_.DoLeft();
+    UpdateInformation();
+  }
 }
 
 void HMDWindow::OnRight() {
-  info_scr_.DoRight();
-  UpdateInformation();
+  if (show_menu_) {
+    info_scr_.DoRight();
+    UpdateInformation();
+  }
 }
 
 void HMDWindow::OnSelect() {
@@ -129,8 +137,9 @@ void HMDWindow::OnSelect() {
     auto action = info_scr_.DoSelectAndGetAction(value);
     switch (action) {
       case InformationScreen::kNoAction: break;
-      case InformationScreen::kPlayAction: ActionPlay(); break;
       case InformationScreen::kInvertAction: ActionInvert(value); break;
+      case InformationScreen::kPlayAction: ActionPlay(); break;
+      case InformationScreen::kRePositionAction: PlayerMakeStep(value * 1000); break;
       default:
         assert(false);
     }
@@ -139,29 +148,32 @@ void HMDWindow::OnSelect() {
 }
 
 
-//void HMDWindow::UIPlayerMakeStep(int move_ms) {
-//  float pos = 0.0f;
+void HMDWindow::PlayerMakeStep(int move_ms) {
 
 
-//  if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
-//    // Goto start
-//  }
-//  else if (media_duration_ <= kBeforeEndInterval) {
-//    // Use default value
-//  }
-//  else if (current_play_position_ + move_ms > (media_duration_ - kBeforeEndInterval)) {
-//    // Stay to before-end position
-//    pos = static_cast<float>(media_duration_ - kBeforeEndInterval) / media_duration_;
-//  }
-//  else {
-//    pos = static_cast<float>(current_play_position_ + move_ms) / media_duration_;
-//  }
+  if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
+    // Goto start
+    current_play_position_ = 0;
+  }
+  else if (media_duration_ <= kBeforeEndInterval) {
+    // Use default value
+    current_play_position_ = 0;
+  }
+  else if (current_play_position_ + move_ms > (media_duration_ - kBeforeEndInterval)) {
+    // Stay to before-end position
+    current_play_position_ = media_duration_ - kBeforeEndInterval;
+  }
+  else {
+    current_play_position_ += move_ms;
+  }
 
-//  video_player->SetPosition(pos);
-//}
+  video_player->SetPosition(static_cast<float>(current_play_position_) /
+      media_duration_);
+}
 
 void HMDWindow::ShowMenu()
 {
+  show_menu_ = true;
   info_scr_.ShowMenu(true);
   UpdateInformation();
 }
@@ -192,6 +204,7 @@ void HMDWindow::UpdateInformation() {
 
 void HMDWindow::HideMenu()
 {
+  show_menu_ = false;
   info_scr_.ShowMenu(false);
   UpdateInformation();
 }

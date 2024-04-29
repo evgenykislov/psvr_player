@@ -7,5 +7,9 @@
         <file>sprite/invert_0.data</file>
         <file>sprite/play.data</file>
         <file>sprite/no_vr.data</file>
+        <file>sprite/fastforward.data</file>
+        <file>sprite/fastbackward.data</file>
+        <file>sprite/backward.data</file>
+        <file>sprite/forward.data</file>
     </qresource>
 </RCC>

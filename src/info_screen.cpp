@@ -4,7 +4,8 @@
 #include <QFile>
 
 InformationScreen::InformationScreen(): screen_changed_(true), no_vr_(false),
-    show_menu_(true), setting_invert_(0), active_pos_(kMenuPlay) {
+    show_menu_(true), setting_invert_(0), active_pos_(kMenuPlay),
+    active_selection_(2) {
   info_scr_.resize(kScrWidth * kScrHeight); // If memory lack, exception finishs constructor
   active_pos_ = kMenuPlay;
 
@@ -27,7 +28,7 @@ const uint32_t* InformationScreen::GetInfoScr() {
 
 }
 
-void InformationScreen::DoLeft() {
+void InformationScreen::DoRight() {
   ++active_selection_;
   if (active_selection_ >= GetMaxMenuSelections(active_pos_)) {
     active_selection_ = 0;
@@ -35,7 +36,7 @@ void InformationScreen::DoLeft() {
   screen_changed_ = true;
 }
 
-void InformationScreen::DoRight() {
+void InformationScreen::DoLeft() {
   if (active_selection_ == 0) {
     active_selection_ = GetMaxMenuSelections(active_pos_) - 1;
   } else {
@@ -47,7 +48,10 @@ void InformationScreen::DoRight() {
 
 void InformationScreen::DoUp() {
   switch (active_pos_) {
-    case kMenuInvert: active_pos_ = kMenuPlay; break;
+    case kMenuInvert:
+      active_pos_ = kMenuPlay;
+      active_selection_ = 2;
+      break;
     case kMenuPlay:
       active_pos_ = kMenuInvert;
       active_selection_ = setting_invert_;
@@ -58,7 +62,10 @@ void InformationScreen::DoUp() {
 
 void InformationScreen::DoDown() {
   switch (active_pos_) {
-    case kMenuInvert: active_pos_ = kMenuPlay; break;
+    case kMenuInvert:
+      active_pos_ = kMenuPlay;
+      active_selection_ = 2;
+      break;
     case kMenuPlay:
       active_pos_ = kMenuInvert;
       active_selection_ = setting_invert_;
@@ -77,10 +84,35 @@ InformationScreen::Action InformationScreen::DoSelectAndGetAction(int& value) {
       return kInvertAction;
       break;
     case kMenuPlay:
+      switch (active_selection_) {
+        case 0:
+          value = -300;
+          return kRePositionAction;
+          break;
+        case 1:
+          value = -30;
+          return kRePositionAction;
+          break;
+        case 2:
+          return kPlayAction;
+          break;
+        case 3:
+          value = +30;
+          return kRePositionAction;
+          break;
+        case 4:
+          value = +300;
+          return kRePositionAction;
+          break;
+
+      }
+
+      assert(false);
       return kPlayAction;
       break;
   }
 
+  assert(false);
   return kPlayAction;
 }
 
@@ -100,31 +132,36 @@ void InformationScreen::LoadResources() {
   LoadResFile(invert_1_tile_, "invert_1.data", kTileSize);
   LoadResFile(play_tile_, "play.data", kTileSize);
 
+  LoadResFile(fast_backward_tile_, "fastbackward.data", kTileSize);
+  LoadResFile(backward_tile_, "backward.data", kTileSize);
+  LoadResFile(forward_tile_, "forward.data", kTileSize);
+  LoadResFile(fast_forward_tile_, "fastforward.data", kTileSize);
 
   LoadResFile(selector_tile_, "selector.data", kTileSize);
   LoadResFile(no_vr_tile_, "no_vr.data", kWarningSize);
 }
 
-bool InformationScreen::LoadResFile(std::vector<uint32_t>& storage, std::string fname, size_t req_size) {
+void InformationScreen::LoadResFile(std::vector<uint32_t>& storage, std::string fname, size_t req_size) {
   storage.clear();
   int rawsize = req_size * sizeof(uint32_t);
   assert(rawsize / sizeof(uint32_t) == req_size);
   try {
     std::string ffn = ":/sprite/" + fname;
     QFile f(ffn.c_str());
-    if (!f.open(QIODevice::ReadOnly | QIODevice::ExistingOnly)) { return false; }
+    if (!f.open(QIODevice::ReadOnly | QIODevice::ExistingOnly)) {
+      throw std::runtime_error(std::string("Can't find resource ") + fname);
+    }
     QDataStream ds(&f);
     storage.resize(req_size);
     auto rd = ds.readRawData((char*)storage.data(), rawsize);
     if (rd < rawsize) {
       storage.clear();
-      return false;
+      throw std::runtime_error(std::string("Not enough data into resource ") + fname);
     }
-    return true;
   }
   catch (std::bad_alloc&) {
+    throw std::runtime_error(std::string("Can't load resource ") + fname);
   }
-  return false;
 }
 
 void InformationScreen::Tile(const Image& img, size_t x, size_t y, size_t width, size_t height) {
@@ -188,16 +225,21 @@ void InformationScreen::DrawInvertMenu(InformationScreen::MenuPosition pos, int 
 
 void InformationScreen::DrawPlayMenu(InformationScreen::MenuPosition pos, int sel) {
   size_t ry = kTileHeight * 4;
-  Tile(play_tile_, 0, ry);
-  if (pos == kMenuPlay) {
-    Tile(selector_tile_, 0, ry);
+  size_t rx = 250;
+  Tile(fast_backward_tile_, rx, ry);
+  Tile(backward_tile_, rx + kTileWidth, ry);
+  Tile(play_tile_, rx + kTileWidth * 2, ry);
+  Tile(forward_tile_, rx + kTileWidth * 3, ry);
+  Tile(fast_forward_tile_, rx + kTileWidth * 4, ry);
+  if (pos == kMenuPlay && sel >= 0 && sel < 5) {
+    Tile(selector_tile_, rx + sel * kTileWidth, ry);
   }
 }
 
 int InformationScreen::GetMaxMenuSelections(InformationScreen::MenuPosition pos) {
   switch (pos) {
     case kMenuInvert: return 2;
-    case kMenuPlay: return 1;
+    case kMenuPlay: return 5;
   }
 
   assert(false);

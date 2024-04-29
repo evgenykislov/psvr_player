@@ -21,8 +21,9 @@ class InformationScreen {
 
   enum Action {
     kNoAction, // Ничего не делаем
+    kInvertAction, // Изменить (инвертировать) порядок отображения экранов
     kPlayAction, // Начать проигрывание
-    kInvertAction // Изменить (инвертировать) порядок отображения экранов
+    kRePositionAction, // Сменить позицию проигрывания
   };
 
   const uint32_t* GetInfoScr();
@@ -69,6 +70,10 @@ class InformationScreen {
   Image invert_0_tile_;
   Image invert_1_tile_;
   Image play_tile_;
+  Image fast_backward_tile_;
+  Image backward_tile_;
+  Image forward_tile_;
+  Image fast_forward_tile_;
 
   Image selector_tile_;
   Image no_vr_tile_;
@@ -81,7 +86,7 @@ class InformationScreen {
 
   void LoadResources();
 
-  bool LoadResFile(std::vector<uint32_t>& storage, std::string fname, size_t req_size);
+  void LoadResFile(std::vector<uint32_t>& storage, std::string fname, size_t req_size);
   void Tile(const Image& img, size_t x, size_t y, size_t width = kTileWidth, size_t height = kTileHeight);
   void DrawScreen();
   void DrawInvertMenu(MenuPosition pos, int sel);

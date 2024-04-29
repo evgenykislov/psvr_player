@@ -320,12 +320,15 @@ void MainWindow::PlayerPositionChanged(float pos)
 		ui->PlayerSlider->setValue((int)((float)ui->PlayerSlider->maximum() * pos));
 
   current_play_position_ = static_cast<uint64_t>(media_duration_ * pos);
+  hmd_window->current_play_position_ = current_play_position_;
   ui->CurPosLabel->setText(FormatPlayTime(current_play_position_));
 }
 
 
 void MainWindow::PlayerDurationParsed(unsigned int dur_ms) {
   media_duration_ = dur_ms;
+  hmd_window->media_duration_ = media_duration_;
+
   ui->DurationLabel->setText(QString("/ ") + FormatPlayTime(media_duration_));
 }
 
