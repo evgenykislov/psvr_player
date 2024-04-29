@@ -22,7 +22,11 @@
 #include <QMainWindow>
 
 #include "hmdwidget.h"
+
+#include "info_screen.h"
 #include "mainwindow.h"
+
+#include "psvr_control.h"
 
 class HMDWindow : public QMainWindow
 {
@@ -37,7 +41,8 @@ class HMDWindow : public QMainWindow
 		MainWindow *main_window;
 
 	public:
-		HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent = 0);
+    HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr,
+        PsvrControl* psvr_control_, QWidget *parent = 0);
 		~HMDWindow();
 
 		HMDWidget *GetHMDWidget()					{ return hmd_widget; }
@@ -50,16 +55,40 @@ class HMDWindow : public QMainWindow
     void SetEyesDistance(float disp);
     void SetHorizontLevel(float horz);
 
+ public slots:
+  void OnUp();
+  void OnDown();
+  void OnLeft();
+  void OnRight();
+  void OnSelect();
+
 
 	protected:
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
  private:
+  static const size_t kInfoScrXPos = 510;
+  static const size_t kInfoScrYPos = 510;
+
   HMDWidget::InfoTextureRow* info_data_;
+  InformationScreen info_scr_;
+  PsvrControl* psvr_control_;
+
 
   /*! Загрузить тестовую информацию, если она есть */
   void LoadTestInfo();
 
+  void ShowMenu();
+  void UpdateInformation();
+  void HideMenu();
+
+  void ActionInvert(int value);
+  void ActionPlay();
+
+  void UIPlayerMakeStep(int move_ms);
+
+ private slots:
+  void PlayerPlaying();
 
 };
 

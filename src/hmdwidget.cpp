@@ -19,7 +19,7 @@
 #include "hmdwidget.h"
 
 HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
-  QOpenGLWidget(parent), cylinder_screen_(false)
+  QOpenGLWidget(parent), cylinder_screen_(false), force_update_info_(false)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -32,7 +32,6 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
   video_tex = nullptr;
   info_texture_data_.resize(kInfoHeight * kInfoWidth);
   info_texture_array_ = (InfoTextureRow*)info_texture_data_.data();
-  memset(info_texture_array_, 0, kInfoWidth * kInfoWidth * sizeof(uint32_t)); // Makes information fully transparent
 
 	fov = 80.0f;
 
@@ -311,6 +310,11 @@ void HMDWidget::UpdateTexture()
 
 	video_tex->bind();
   video_tex->setData(rgb_workaround ? QOpenGLTexture::BGR : QOpenGLTexture::RGB, QOpenGLTexture::PixelType::UInt8, video_data->GetData());
+  if (force_update_info_) {
+    force_update_info_ = false;
+    info_tex_->bind();
+    info_tex_->setData(QOpenGLTexture::RGBA, QOpenGLTexture::PixelType::UInt8, info_texture_data_.data());
+  }
 }
 
 void HMDWidget::RenderEye(int eye)

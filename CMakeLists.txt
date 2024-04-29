@@ -26,22 +26,26 @@ include_directories(${LIBVLC_INCLUDE_DIR})
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-set(SOURCE_FILES
-  src/main.cpp
+set(HEADER_FILES
   include/mainwindow.h
-  src/mainwindow.cpp
-  src/psvr.cpp
   include/psvr.h
-  src/hmdwindow.cpp
   include/hmdwindow.h
-  src/hmdwidget.cpp
   include/hmdwidget.h
-  src/videoplayer.cpp
   include/videoplayer.h
   include/psvr_control.h
-  src/psvr_control.cpp
   include/key_filter.h
-  src/key_filter.cpp)
+  include/info_screen.h)
+
+set(SOURCE_FILES
+  src/main.cpp
+  src/mainwindow.cpp
+  src/psvr.cpp
+  src/hmdwindow.cpp
+  src/hmdwidget.cpp
+  src/videoplayer.cpp
+  src/psvr_control.cpp
+  src/key_filter.cpp
+  src/info_screen.cpp)
 
 set(UI_FILES
   src/mainwindow.ui)
@@ -49,7 +53,7 @@ set(UI_FILES
 set(QRC_FILES
   resources.qrc)
 
-add_executable(${PROJECT_NAME} ${UI_FILES} ${SOURCE_FILES}  ${QRC_FILES})
+add_executable(${PROJECT_NAME} ${UI_FILES} ${HEADER_FILES} ${SOURCE_FILES} ${QRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} ${HIDAPI_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${LIBVLC_LIBRARY})

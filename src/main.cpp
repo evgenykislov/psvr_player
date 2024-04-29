@@ -43,13 +43,14 @@ int main(int argc, char *argv[])
   {
     QApplication app(argc, argv);
     PsvrSensors psvr;
+    PsvrControl psvr_control;
 
     VideoPlayer video_player;
 
-    MainWindow main_window(&video_player, &psvr);
+    MainWindow main_window(&video_player, &psvr, &psvr_control);
     main_window.show();
 
-    HMDWindow hmd_window(&video_player, &psvr);
+    HMDWindow hmd_window(&video_player, &psvr, &psvr_control);
     hmd_window.show();
     //hmd_window.showFullScreen();
     //hmd_window.windowHandle()->setScreen(app.screens()[1]);

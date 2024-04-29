@@ -111,6 +111,7 @@ class HMDWidget : public QOpenGLWidget
     Данные представляют собой массив kInfoHeight * kInfoWidth пикселей,
     каждый пиксель 4 байта (RGBA) */
     InfoTextureRow* GetInfoData() { return info_texture_array_; }
+    void ForceUpdateInfo() { force_update_info_ = true; }
 
     void SetHorizontLevel(float horz) { horizont_level_ = horz; }
 
@@ -122,15 +123,15 @@ class HMDWidget : public QOpenGLWidget
  private:
   static const size_t kTriangleFactor = 32;
 
-
-
   std::vector<uint32_t> info_texture_data_; //!< Память под данные выделяются в конструкторе. Единожды
   InfoTextureRow* info_texture_array_; //!< Указывает на данные в info_texture_data_
   std::vector<QVector3D> cube_vertices_;
 
+
   // TODO Can make faster
   std::atomic<float> eyes_disp_; //!< Смещение для компенсации меж-глазного расстояния
   std::atomic<float> horizont_level_; //!< Смещение горизонта
+  std::atomic_bool force_update_info_; //!< Признак, что нужно принудительно обновить текстуру информации
 
 
   void GenerateCubeVertices();

@@ -1,6 +1,11 @@
 <RCC>
-  <qresource>
-    <file>shader/sphere.vert</file>
-    <file>shader/sphere.frag</file>
-  </qresource>
+    <qresource prefix="/">
+        <file>shader/sphere.vert</file>
+        <file>shader/sphere.frag</file>
+        <file>sprite/selector.data</file>
+        <file>sprite/invert_1.data</file>
+        <file>sprite/invert_0.data</file>
+        <file>sprite/play.data</file>
+        <file>sprite/no_vr.data</file>
+    </qresource>
 </RCC>

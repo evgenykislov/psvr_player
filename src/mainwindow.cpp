@@ -28,10 +28,11 @@
 
 #include "project_version.h"
 
-MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *parent):
+MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr,
+    PsvrControl* psvr_control, QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow), media_duration_(0),
     current_play_position_(0), settings_("psvr_player.conf", QSettings::IniFormat),
-    auto_full_screen_(false), horizont_level_(0)
+    auto_full_screen_(false), horizont_level_(0), psvr_control_(psvr_control)
 {
 	this->video_player = video_player;
 	this->psvr = psvr;
@@ -63,16 +64,14 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 
 	connect(ui->OpenButton, SIGNAL(clicked()), this, SLOT(OpenVideoFile()));
 
-	connect(ui->PlayButton, SIGNAL(clicked()), this, SLOT(UIPlayerPlay()));
   connect(ui->StopButton, SIGNAL(clicked()), this, SLOT(UIPlayerStop()));
-	connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
+  connect(ui->PlayerSlider, SIGNAL(sliderMoved(int)), this, SLOT(UIPlayerPositionChanged(int)));
 
-  connect(&key_filter_, SIGNAL(Pause()), this, SLOT(UIPlayerPlay()), Qt::QueuedConnection);
-  connect(&key_filter_, SIGNAL(MakeStep(int)), this, SLOT(UIPlayerMakeStep(int)), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(ResetView()), this, SLOT(ResetView()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(CompensateView()), this, SLOT(CompensateView()), Qt::QueuedConnection);
   connect(&key_filter_, SIGNAL(FullScreen()), this, SLOT(UIPlayerFullScreen()), Qt::QueuedConnection);
-  connect(&key_filter_, SIGNAL(Stop()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(FullStop()), this, SLOT(UIPlayerStopPlay()), Qt::QueuedConnection);
+
 
 	connect(ui->FOVDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(FOVValueChanged(double)));
 	connect(ui->ResetViewButton, SIGNAL(clicked()), this, SLOT(ResetView()));
@@ -110,7 +109,7 @@ MainWindow::MainWindow(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pa
 
 MainWindow::~MainWindow()
 {
-  psvr_control_.CloseDevice();
+  psvr_control_->CloseDevice();
   removeEventFilter(&key_filter_);
 
 	delete ui;
@@ -139,7 +138,16 @@ void MainWindow::SetHMDWindow(HMDWindow* hmdwnd)
   }
 
   hmd_window = hmdwnd;
+
+  connect(&key_filter_, SIGNAL(Up()), hmd_window, SLOT(OnUp()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Down()), hmd_window, SLOT(OnDown()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Left()), hmd_window, SLOT(OnLeft()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Right()), hmd_window, SLOT(OnRight()), Qt::QueuedConnection);
+  connect(&key_filter_, SIGNAL(Select()), hmd_window, SLOT(OnSelect()), Qt::QueuedConnection);
+
   hmd_window->installEventFilter(&key_filter_);
+
+
 
   UpdateFov();
 
@@ -247,13 +255,6 @@ void MainWindow::OpenVideoFile()
 	ui->PlayerControlsWidget->setEnabled(true);
 }
 
-void MainWindow::UIPlayerPlay()
-{
-	if(video_player->IsPlaying())
-		video_player->Pause();
-	else
-		video_player->Play();
-}
 
 void MainWindow::UIPlayerStop()
 {
@@ -288,20 +289,6 @@ void MainWindow::UIPlayerPositionChanged(int value)
 
 void MainWindow::PlayerPlaying()
 {
-  if (!psvr_control_.IsOpened() && !psvr_control_.OpenDevice()) {
-    QMessageBox::critical(this, tr("PSVR Player"), tr("Failed to connect to HID control device."));
-  }
-  else {
-    psvr_control_.SetVRMode(true);
-  }
-
-  if (auto_full_screen_) {
-    if (hmd_window) {
-      hmd_window->SwitchFullScreen(true);
-      hmd_window->activateWindow();
-    }
-  }
-
 	ui->StopButton->setEnabled(true);
 	ui->PlayButton->setText(tr("Pause"));
 }
@@ -321,9 +308,10 @@ void MainWindow::PlayerStopped()
     hmd_window->showNormal();
   }
 
-  if (psvr_control_.IsOpened() || psvr_control_.OpenDevice()) {
-    psvr_control_.SetVRMode(false);
-  }
+  // TODO
+//  if (psvr_control_.IsOpened() || psvr_control_.OpenDevice()) {
+//    psvr_control_.SetVRMode(false);
+//  }
 }
 
 void MainWindow::PlayerPositionChanged(float pos)
@@ -349,28 +337,6 @@ void MainWindow::UIPlayerPositionChangedDelayed()
 		video_player->SetPosition(player_position_delayed);
 		player_position_delayed = -1.0f;
 	}
-}
-
-
-void MainWindow::UIPlayerMakeStep(int move_ms) {
-  float pos = 0.0f;
-
-
-  if (move_ms < 0 && current_play_position_ < static_cast<uint64_t>(-move_ms)) {
-    // Goto start
-  }
-  else if (media_duration_ <= kBeforeEndInterval) {
-    // Use default value
-  }
-  else if (current_play_position_ + move_ms > (media_duration_ - kBeforeEndInterval)) {
-    // Stay to before-end position
-    pos = static_cast<float>(media_duration_ - kBeforeEndInterval) / media_duration_;
-  }
-  else {
-    pos = static_cast<float>(current_play_position_ + move_ms) / media_duration_;
-  }
-
-  video_player->SetPosition(pos);
 }
 
 
@@ -441,8 +407,8 @@ void MainWindow::UpdateTimer() {
   if (!psvr->IsOpen()) {
     psvr->OpenDevice();
   }
-  if (!psvr_control_.IsOpened()) {
-    psvr_control_.OpenDevice();
+  if (!psvr_control_->IsOpened()) {
+    psvr_control_->OpenDevice();
   }
   ShowHelmetState();
 }
@@ -483,7 +449,7 @@ void MainWindow::ShowHelmetState()
   if (psvr->IsOpen()) {
     sst = "Sensors - OK";
   }
-  if (psvr_control_.IsOpened()) {
+  if (psvr_control_->IsOpened()) {
     cst = "Control - OK";
   }
 
@@ -524,3 +490,4 @@ void MainWindow::OnHorizontChanged(int value) {
   settings_.setValue("horizont_level", horizont_level_);
   settings_.sync();
 }
+

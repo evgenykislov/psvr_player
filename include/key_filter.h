@@ -31,12 +31,16 @@ class KeyFilter: public QObject {
   virtual bool eventFilter(QObject*, QEvent* event) override;
 
  signals:
-   void Pause();
-   void Stop();
-   void MakeStep(int move_ms);
+   void FullStop();
    void ResetView();
    void FullScreen();
    void CompensateView();
+
+   void Up();
+   void Down();
+   void Left();
+   void Right();
+   void Select();
 };
 
 
