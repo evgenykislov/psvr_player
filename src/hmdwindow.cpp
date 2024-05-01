@@ -115,8 +115,21 @@ void HMDWindow::OnDown() {
 
 void HMDWindow::OnLeft() {
   if (show_menu_) {
+    // Changes menu selections
     info_scr_.DoLeft();
     UpdateInformation();
+  } else {
+    // Make some rewind
+    auto curt = std::chrono::steady_clock::now();
+
+    if ((last_backward_mark_ < curt) &&
+        (curt < (last_backward_mark_ + std::chrono::milliseconds(kFastForwardTimeout)))) {
+      PlayerMakeStep(-kFastForwardStep);
+    } else {
+      PlayerMakeStep(-kForwardStep);
+    }
+    last_backward_mark_ = curt;
+    last_forward_mark_ = std::chrono::steady_clock::time_point();
   }
 }
 
@@ -124,6 +137,18 @@ void HMDWindow::OnRight() {
   if (show_menu_) {
     info_scr_.DoRight();
     UpdateInformation();
+  } else {
+    // Make some rewind
+    auto curt = std::chrono::steady_clock::now();
+
+    if ((last_forward_mark_ < curt) &&
+        (curt < (last_forward_mark_ + std::chrono::milliseconds(kFastForwardTimeout)))) {
+      PlayerMakeStep(kFastForwardStep);
+    } else {
+      PlayerMakeStep(kForwardStep);
+    }
+    last_forward_mark_ = curt;
+    last_backward_mark_ = std::chrono::steady_clock::time_point();
   }
 }
 
