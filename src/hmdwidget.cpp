@@ -43,7 +43,7 @@ HMDWidget::HMDWidget(VideoPlayer *video_player, PsvrSensors *psvr, QWidget *pare
 
 	rgb_workaround = false;
 
-  GenerateCubeVertices();
+  GenerateFlatVertices();
 }
 
 HMDWidget::~HMDWidget()
@@ -213,34 +213,13 @@ void HMDWidget::paintGL()
   update();
 }
 
-void HMDWidget::GenerateCubeVertices() {
-  QVector3D ltn(-1.0f,  1.0f, -1.0f);
-  QVector3D lbn(-1.0f, -1.0f, -1.0f);
-  QVector3D rbn( 1.0f, -1.0f, -1.0f);
-  QVector3D rtn( 1.0f,  1.0f, -1.0f);
-  QVector3D ltf(-1.0f,  1.0f,  1.0f);
-  QVector3D lbf(-1.0f, -1.0f,  1.0f);
-  QVector3D rbf( 1.0f, -1.0f,  1.0f);
-  QVector3D rtf( 1.0f,  1.0f,  1.0f);
+void HMDWidget::GenerateFlatVertices() {
+  QVector3D ltf(-2.0f,  2.0f, -1.0f);
+  QVector3D lbf(-2.0f, -2.0f, -1.0f);
+  QVector3D rbf( 2.0f, -2.0f, -1.0f);
+  QVector3D rtf( 2.0f,  2.0f, -1.0f);
 
-  AddFaceToVertices(ltn, lbn, rbn, rtn); // Back
-  AddFaceToVertices(rtf, rbf, lbf, ltf); // Front
-  AddFaceToVertices(ltf, lbf, lbn, ltn); // Left
-  AddFaceToVertices(rtn, rbn, rbf, rtf); // Right
-  AddFaceToVertices(ltn, rtn, rtf, ltf); // Top
-  AddFaceToVertices(rbn, lbn, lbf, rbf); // Bottom
-
-// Check with original cube_vertices.
-//  assert(cube_vertices_.size() == 36);
-//  float max_dif = 0.0f;
-//  size_t max_index = 0;
-//  for (size_t i = 0; i < 36; ++i) {
-//    auto dif = (cube_vertices_[i] - cube_vertices[i]).length();
-//    if (dif > max_dif) {
-//      max_dif = dif;
-//      max_index = i;
-//    }
-//  }
+  AddFaceToVertices(ltf, lbf, rbf, rtf); // Back
 }
 
 void HMDWidget::AddFaceToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4)
@@ -343,7 +322,9 @@ void HMDWidget::RenderEye(int eye)
 
 
 	QMatrix4x4 projection_matrix;
-	projection_matrix.perspective(fov, ((float)(w/2)) / (float)h, 0.1f, 100.0f);
+//  projection_matrix.ortho(-1, 1, -1, 1, 0, -2);
+//	projection_matrix.perspective(fov, ((float)(w/2)) / (float)h, 0.1f, 100.0f);
+
 
   sphere_shader->setUniformValue("modelview_projection_uni", view * projection_matrix);
 

@@ -18,36 +18,36 @@
  *
  */
 
-uniform mat4 modelview_projection_uni;
 
 /*! Смещение изображения к центру в размерности изображения для компенсации
 глазного расстояния. Такое же смещение внесено в modelview_projection_uni */
 uniform float vertex_x_disp;
 
-in vec3 vertex_attr;
+// in vec3 vertex_attr;
+in vec4 vertex_attr;
 
-out vec3 position_var;
+out vec4 position_var;
 out float blue_x_disp;
 out float blue_y_disp;
 out float green_x_disp;
 out float green_y_disp;
 
-out vec3 info_red_position;
-out vec3 info_green_position;
-out vec3 info_blue_position;
+out vec4 info_red_position;
+out vec4 info_green_position;
+out vec4 info_blue_position;
 
 
-vec3 GetGreenPosition(vec3 pos) {
-  pos.y += 0.0015;
+vec4 GetGreenPosition(vec4 pos) {
+  pos.y += 0.0015 * pos.w;
   pos.x /= 0.995;
   pos.y /= 0.994;
   return pos;
 }
 
 
-vec3 GetBluePosition(vec3 pos) {
-  pos.x -= 0.0015;
-  pos.y += 0.002;
+vec4 GetBluePosition(vec4 pos) {
+  pos.x -= 0.0015 * pos.w;
+  pos.y += 0.002 * pos.w;
   pos.x /= 0.990;
   pos.y /= 0.990;
   return pos;
@@ -56,14 +56,15 @@ vec3 GetBluePosition(vec3 pos) {
 
 void main(void)
 {
-  vec4 screen_scale = vec4(1.0, 0.87, 1.0, 1.0);
+  vec4 screen_scale = vec4(1.15, 1.0, 1.0, 1.0);
   float disp_scale = 0.85;
 
   position_var = vertex_attr;
   // scr_pos это позиция точки на экране с правильными пропорциями:
   // горизонтальный и вертикальный отрезки одинаковой длины выглядят одинаково
   // для глаза
-  vec4 scr_pos = modelview_projection_uni * vec4(vertex_attr, 1.0);
+  vec4 scr_pos = /* modelview_projection_uni * */ vertex_attr; // vec4(vertex_attr, 1.0);
+
   gl_Position = scr_pos;
 
   // Compensate distortion
@@ -104,14 +105,15 @@ void main(void)
 
 
   float info_scale = 1.0;
-  info_red_position = scr_pos.xyz / scr_pos.w;
+  info_red_position = scr_pos;
+//  info_red_position.x /= info_red_position.z;
   info_red_position.x /= info_scale;
   info_red_position.y /= info_scale * -1.0;
-  info_red_position.z = 1.0;
+//  info_red_position.z = 1.0;
   info_green_position = GetGreenPosition(info_red_position);
   info_blue_position = GetBluePosition(info_red_position);
 
-  info_red_position.x -= vertex_x_disp;
-  info_green_position.x -= vertex_x_disp;
-  info_blue_position.x -= vertex_x_disp;
+//  info_red_position.x -= vertex_x_disp;
+//  info_green_position.x -= vertex_x_disp;
+//  info_blue_position.x -= vertex_x_disp;
 }

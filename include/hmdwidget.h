@@ -134,8 +134,11 @@ class HMDWidget : public QOpenGLWidget
   std::atomic_bool force_update_info_; //!< Признак, что нужно принудительно обновить текстуру информации
 
 
-  void GenerateCubeVertices();
+  void GenerateFlatVertices();
   void AddFaceToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4);
+
+  /*! Добавляет в cube_vertices_ два треугольника для представления квадрата с
+  вершинами p1-p2-p3-p4 */
   void AddSquareToVertices(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4);
   QVector3D ApproximateVertice(QVector3D p1, QVector3D p2, QVector3D p3, QVector3D p4, float f1, float f2);
 

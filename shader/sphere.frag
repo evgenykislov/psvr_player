@@ -27,22 +27,22 @@ uniform float projection_angle_factor_uni;
 uniform bool cylinder_type;
 uniform mat4 modelview_projection_uni;
 
-in vec3 position_var;
+in vec4 position_var;
 in float blue_x_disp;
 in float blue_y_disp;
 in float green_x_disp;
 in float green_y_disp;
 
-in vec3 info_red_position;
-in vec3 info_green_position;
-in vec3 info_blue_position;
+in vec4 info_red_position;
+in vec4 info_green_position;
+in vec4 info_blue_position;
 
 
 out vec4 color_out;
 
 
 vec4 GetCylinderColor(vec3 position) {
-  const float cylinder_radius = 1.0;
+  const float cylinder_radius = 10.0;
   const float plane_distance = 1.0;
   const float plane_arc = 1.3;
   const float xarc = plane_arc * plane_distance / cylinder_radius; // in radians
@@ -142,12 +142,32 @@ vec4 GetCubeColor(vec3 pos) {
 }
 
 
+// TODO REMOVE
+vec4 GetBarsColor(vec4 pos) {
+  vec4 res;
+
+  float min = -1.02;
+  float max = -1.01;
+  float v = pos.z;
+  if (v < min) { return vec4(0, 1, 0, 1); }
+  if (v > max) { return vec4(1, 0, 0, 1); }
+  return vec4(0, 0, (v - min) / (max - min) * 0.75 + 0.25, 1);
+
+
+  res.r = (int)(pos.x * 20 + 100) % 2 == 0 ? 1.0: 0.0;
+  res.g = 0.0;
+  res.b = (int)(pos.y * 20 + 100) % 2 == 0 ? 1.0: 0.0;
+  res.a = 1.0;
+  return res;
+}
+
+
 void main(void)
 {
   // Calculates position of colored point
-  vec4 view_pos = vec4(position_var, 1.0);
+  vec4 scr_pos = modelview_projection_uni * position_var; // vec4(vertex_attr, 1.0);
+  vec3 pos_red = (modelview_projection_uni * position_var).xyz;
 
-  vec3 pos_red = view_pos.xyz; // Red without correction
   vec3 pos_blue = pos_red;
   pos_blue.x += pos_blue.z * blue_x_disp;
   pos_blue.y += pos_blue.z * blue_y_disp;
@@ -168,17 +188,19 @@ void main(void)
 
   // Координаты отображения для красного (info_red_position),
   // зелёного (info_green_position) и синего (info info_blue_position) цвета
-  // Координаты поля: x = -1 - +1; y = -1 - +1; z = 1
+  // Координаты поля: x = -1 - +1; y = -1 - +1; z = -1
   // Координата x возрастает слева (-1) - направо (+1);
   // у возрастает снизу (-1) вверх (+1)
   // Координаты могут выходить за границы поля или быть меньше, т.к. есть
   // коррекция глазного расстояния
 
-
+//  return;
+//  color_out = GetBarsColor(info_red_position);
+//  return;
   // Наложим маску информации
-  vec4 infor = GetInfoColor(info_red_position);
-  vec4 infog = GetInfoColor(info_green_position);
-  vec4 infob = GetInfoColor(info_blue_position);
+  vec4 infor = GetInfoColor(info_red_position.xyz);
+  vec4 infog = GetInfoColor(info_green_position.xyz);
+  vec4 infob = GetInfoColor(info_blue_position.xyz);
 
   color_out.r = color_out.r * (1.0 - infor.a) + infor.r * infor.a;
   color_out.g = color_out.g * (1.0 - infog.a) + infog.g * infog.a;

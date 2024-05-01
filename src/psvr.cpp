@@ -179,7 +179,7 @@ void PsvrSensors::GetModelViewMatrix(QMatrix4x4& matrix) {
   m.setToIdentity();
   m.rotate(x, -1.0f, 0.0f, 0.0f);
   m.rotate(y, 0.0f, -1.0f, 0.0f);
-  m.rotate(z, 0.0f, 0.0f, -1.0f);
+  m.rotate(z, 0.0f, 0.0f, +1.0f);
 
   matrix = m;
 }
