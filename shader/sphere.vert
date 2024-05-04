@@ -19,7 +19,7 @@
  */
 
 
-#define DEBUG_DISTORSION
+// #define DEBUG_DISTORSION
 
 
 /*! Смещение изображения к центру в размерности изображения для компенсации
@@ -56,16 +56,15 @@ vec4 GetBluePosition(vec4 pos) {
   return pos;
 }
 
-
 #ifdef DEBUG_DISTORSION
 
 float kDistorsion0 = 1.0; // Len = 0. It's center of screen. k = 1.0
 float kDistorsion1 = 1.0; // Len = 0.250. It's first square center of edge. k near 1.0
-float kDistorsion2 = 1.0; // Len = 0.354. It's first square corner
-float kDistorsion3 = 1.0; // Len = 0.500. Second square edge center
-float kDistorsion4 = 1.0; // Len = 0.750. Second square corner and third square edge center
-float kDistorsion5 = 1.0; // Len = 1.000. Forth square edge center
-float kDistorsion6 = 1.0; // Len = 1.400. Forth square corner
+float kDistorsion2 = 0.98; // Len = 0.354. It's first square corner
+float kDistorsion3 = 0.98; // Len = 0.500. Second square edge center
+float kDistorsion4 = 0.91; // Len = 0.750. Second square corner and third square edge center
+float kDistorsion5 = 0.82; // Len = 1.000. Third square corner and forth square edge center
+float kDistorsion6 = 0.69; // Len = 1.400. Forth square corner
 float kDistorsionMaxDist = 1.5;
 
 vec4 FixDistorsion(vec4 pos) {
@@ -98,7 +97,18 @@ vec4 FixDistorsion(vec4 pos) {
 #else
 
 vec4 FixDistorsion(vec4 pos) {
+  vec2 cpos;
+  cpos.x = pos.x / pos.z / pos.w;
+  cpos.y = pos.y / pos.z / pos.w;
+  float len = length(cpos);
 
+  if (len > 1.5) { return pos; }
+  float km1 = -0.02328336 * len * len * len + 0.33334678 * len * len -
+      0.10098184 * len + 1.00274654;
+  float k = 1.0 / km1;
+
+  pos.x *= k;
+  pos.y *= k;
   return pos;
 }
 
