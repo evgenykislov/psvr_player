@@ -19,6 +19,9 @@
  */
 
 
+#define DEBUG_DISTORSION
+
+
 /*! Смещение изображения к центру в размерности изображения для компенсации
 глазного расстояния. Такое же смещение внесено в modelview_projection_uni */
 uniform float vertex_x_disp;
@@ -54,6 +57,53 @@ vec4 GetBluePosition(vec4 pos) {
 }
 
 
+#ifdef DEBUG_DISTORSION
+
+float kDistorsion0 = 1.0; // Len = 0. It's center of screen. k = 1.0
+float kDistorsion1 = 1.0; // Len = 0.250. It's first square center of edge. k near 1.0
+float kDistorsion2 = 1.0; // Len = 0.354. It's first square corner
+float kDistorsion3 = 1.0; // Len = 0.500. Second square edge center
+float kDistorsion4 = 1.0; // Len = 0.750. Second square corner and third square edge center
+float kDistorsion5 = 1.0; // Len = 1.000. Forth square edge center
+float kDistorsion6 = 1.0; // Len = 1.400. Forth square corner
+float kDistorsionMaxDist = 1.5;
+
+vec4 FixDistorsion(vec4 pos) {
+  // Отладочная версия
+  vec2 cpos;
+  cpos.x = pos.x / pos.z / pos.w;
+  cpos.y = pos.y / pos.z / pos.w;
+  float len = length(cpos);
+  if (len > kDistorsionMaxDist) { return pos; }
+  float k = 1.0;
+  if (len <= 0.250) {
+    k = kDistorsion0 + (kDistorsion1 - kDistorsion0) / 0.250 * len;
+  } else if (len <= 0.354) {
+    k = kDistorsion1 + (kDistorsion2 - kDistorsion1) / 0.104 * (len - 0.250);
+  } else if (len <= 0.500) {
+    k = kDistorsion2 + (kDistorsion3 - kDistorsion2) / 0.146 * (len - 0.354);
+  } else if (len <= 0.750) {
+    k = kDistorsion3 + (kDistorsion4 - kDistorsion3) / 0.250 * (len - 0.500);
+  } else if (len <= 1.000) {
+    k = kDistorsion4 + (kDistorsion5 - kDistorsion4) / 0.250 * (len - 0.750);
+  } else {
+    k = kDistorsion5 + (kDistorsion6 - kDistorsion5) / 0.400 * (len - 1.000);
+  }
+
+  pos.x *= k;
+  pos.y *= k;
+  return pos;
+}
+
+#else
+
+vec4 FixDistorsion(vec4 pos) {
+
+  return pos;
+}
+
+#endif
+
 void main(void)
 {
   vec4 screen_scale = vec4(1.15, 1.0, 1.0, 1.0);
@@ -65,29 +115,7 @@ void main(void)
   // для глаза
   vec4 scr_pos = /* modelview_projection_uni * */ vertex_attr; // vec4(vertex_attr, 1.0);
 
-  gl_Position = scr_pos;
-
-  // Compensate distortion
-  if (false) {
-    const float scr_radius = 1.8;
-    const float dis_k1 = -0.32; // Manual calibration
-    const float dis_k2 = 0.015;
-    const float min_radius = 0.01;
-    const float max_radius = 3.0;
-    vec2 dispos;
-    vec4 distorsion = vec4(1.0, 1.0, 1.0, 1.0);
-    dispos.x = scr_pos.x / scr_pos.z;
-    dispos.y = scr_pos.y / scr_pos.z;
-    float dislen = length(dispos) / scr_radius;
-    if (dislen > min_radius && dislen < max_radius) {
-      float dislen2 = dislen * dislen;
-      float dislen4 = dislen2 * dislen2;
-      float newlen = dislen + dis_k1 * dislen2 + dis_k2 * dislen4;
-      float dis_koef = newlen / dislen;
-      distorsion = vec4(dis_koef, dis_koef, 1.0, 1.0);
-    }
-    gl_Position = scr_pos * distorsion;
-  }
+  gl_Position = FixDistorsion(scr_pos);
 
   // Vertial/Horizontal ratio compensation
   gl_Position *= screen_scale;
