@@ -74,18 +74,12 @@ class HMDWindow : public QMainWindow
   static const size_t kInfoScrXPos = 510;
   static const size_t kInfoScrYPos = 510;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
-  const uint64_t kFastForwardTimeout = 1000; //!< Максимальное время между последовательными переметками для включения быстрой перемотки. В миллисекундах.
-  const uint64_t kForwardStep = 30000;
-  const uint64_t kFastForwardStep = 300000;
-
+  const uint64_t kForwardStep = 3000; //!< Интервал перемотки
 
   HMDWidget::InfoTextureRow* info_data_;
   InformationScreen info_scr_;
   PsvrControl* psvr_control_;
   bool show_menu_; //!< Признак, что отображается настроечное меню
-  std::chrono::steady_clock::time_point last_backward_mark_; //!< Время, когда в предыдущий раз была использвана перемотка над при проигрывании. Используется для ускоренной переметки. Может быть пустое значение.
-  std::chrono::steady_clock::time_point last_forward_mark_; //!< Время последней перемотки вперёд. Подробнее см. last_backward_mark_.
-
 
   /*! Загрузить тестовую информацию, если она есть */
   void LoadTestInfo();

@@ -120,16 +120,7 @@ void HMDWindow::OnLeft() {
     UpdateInformation();
   } else {
     // Make some rewind
-    auto curt = std::chrono::steady_clock::now();
-
-    if ((last_backward_mark_ < curt) &&
-        (curt < (last_backward_mark_ + std::chrono::milliseconds(kFastForwardTimeout)))) {
-      PlayerMakeStep(-kFastForwardStep);
-    } else {
-      PlayerMakeStep(-kForwardStep);
-    }
-    last_backward_mark_ = curt;
-    last_forward_mark_ = std::chrono::steady_clock::time_point();
+    PlayerMakeStep(-kForwardStep);
   }
 }
 
@@ -139,16 +130,7 @@ void HMDWindow::OnRight() {
     UpdateInformation();
   } else {
     // Make some rewind
-    auto curt = std::chrono::steady_clock::now();
-
-    if ((last_forward_mark_ < curt) &&
-        (curt < (last_forward_mark_ + std::chrono::milliseconds(kFastForwardTimeout)))) {
-      PlayerMakeStep(kFastForwardStep);
-    } else {
-      PlayerMakeStep(kForwardStep);
-    }
-    last_forward_mark_ = curt;
-    last_backward_mark_ = std::chrono::steady_clock::time_point();
+    PlayerMakeStep(kForwardStep);
   }
 }
 
