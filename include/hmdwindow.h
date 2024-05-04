@@ -74,12 +74,12 @@ class HMDWindow : public QMainWindow
   static const size_t kInfoScrXPos = 510;
   static const size_t kInfoScrYPos = 510;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
+  const uint64_t kForwardStep = 3000; //!< Интервал перемотки
 
   HMDWidget::InfoTextureRow* info_data_;
   InformationScreen info_scr_;
   PsvrControl* psvr_control_;
   bool show_menu_; //!< Признак, что отображается настроечное меню
-
 
   /*! Загрузить тестовую информацию, если она есть */
   void LoadTestInfo();

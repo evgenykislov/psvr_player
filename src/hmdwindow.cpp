@@ -115,8 +115,12 @@ void HMDWindow::OnDown() {
 
 void HMDWindow::OnLeft() {
   if (show_menu_) {
+    // Changes menu selections
     info_scr_.DoLeft();
     UpdateInformation();
+  } else {
+    // Make some rewind
+    PlayerMakeStep(-kForwardStep);
   }
 }
 
@@ -124,6 +128,9 @@ void HMDWindow::OnRight() {
   if (show_menu_) {
     info_scr_.DoRight();
     UpdateInformation();
+  } else {
+    // Make some rewind
+    PlayerMakeStep(kForwardStep);
   }
 }
 
