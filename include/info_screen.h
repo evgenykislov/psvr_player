@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "tile.h"
+
 struct InformationState {
 
   bool InvertUsage;
@@ -87,7 +89,7 @@ class InformationScreen {
   void LoadResources();
 
   void LoadResFile(std::vector<uint32_t>& storage, std::string fname, size_t req_size);
-  void Tile(const Image& img, size_t x, size_t y, size_t width = kTileWidth, size_t height = kTileHeight);
+  void Tile(const Image& img, size_t x, size_t y, size_t width = kTileWidth);
   void DrawScreen();
   void DrawInvertMenu(MenuPosition pos, int sel);
   void DrawPlayMenu(MenuPosition pos, int sel);

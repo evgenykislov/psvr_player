@@ -34,7 +34,8 @@ set(HEADER_FILES
   include/videoplayer.h
   include/psvr_control.h
   include/key_filter.h
-  include/info_screen.h)
+  include/info_screen.h
+  include/tile.h)
 
 set(SOURCE_FILES
   src/main.cpp
@@ -45,7 +46,8 @@ set(SOURCE_FILES
   src/videoplayer.cpp
   src/psvr_control.cpp
   src/key_filter.cpp
-  src/info_screen.cpp)
+  src/info_screen.cpp
+  src/tile.cpp)
 
 set(UI_FILES
   src/mainwindow.ui)

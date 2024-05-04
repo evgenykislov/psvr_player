@@ -3,9 +3,8 @@
 #include <QDataStream>
 #include <QFile>
 
-InformationScreen::InformationScreen(): screen_changed_(true), no_vr_(false),
-    show_menu_(true), setting_invert_(0), active_pos_(kMenuPlay),
-    active_selection_(2) {
+InformationScreen::InformationScreen(): active_pos_(kMenuPlay), screen_changed_(true),
+    active_selection_(2), no_vr_(false), show_menu_(true), setting_invert_(0) {
   info_scr_.resize(kScrWidth * kScrHeight); // If memory lack, exception finishs constructor
   active_pos_ = kMenuPlay;
 
@@ -164,35 +163,8 @@ void InformationScreen::LoadResFile(std::vector<uint32_t>& storage, std::string 
   }
 }
 
-void InformationScreen::Tile(const Image& img, size_t x, size_t y, size_t width, size_t height) {
-  if (width == 0 || height == 0) { return; }
-  if ((x + width) > kScrWidth) { return; }
-  if ((y + height) > kScrHeight) { return; }
-
-  uint32_t* dst = info_scr_.data() + y * kScrWidth + x;
-  const uint32_t* src = img.data();
-  for (size_t i = 0; i < height; ++i) {
-    for (size_t j = 0; j < width; ++j) {
-      struct pixel {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-        uint8_t alpha;
-      };
-
-      auto pres = *(pixel*)(dst + j);
-      auto pmsk = *(pixel*)(src + j);
-      float sol = pmsk.alpha / 255.0f;
-      float tra = 1.0f - sol;
-      pres.red = pres.red * tra + pmsk.red * sol;
-      pres.green = pres.green * tra + pmsk.green * sol;
-      pres.blue = pres.blue * tra + pmsk.blue * sol;
-      pres.alpha = 255 - (uint8_t)((255 - pres.alpha) * tra);
-      *(pixel*)(dst + j) = pres;
-    }
-    dst += kScrWidth;
-    src += width;
-  }
+void InformationScreen::Tile(const Image& img, size_t x, size_t y, size_t width) {
+  AddTile(info_scr_, kScrWidth, img, width, x, y);
 }
 
 void InformationScreen::DrawScreen() {
@@ -204,7 +176,7 @@ void InformationScreen::DrawScreen() {
   }
 
   if (no_vr_) {
-    Tile(no_vr_tile_, kScrWidth - kWarningWidth, 0, kWarningWidth, kWarningHeight);
+    Tile(no_vr_tile_, kScrWidth - kWarningWidth, 0, kWarningWidth);
   }
 }
 
