@@ -24,6 +24,7 @@
 
 #include "psvr.h"
 #include "psvr_control.h"
+#include "tile.h"
 #include "hmdwindow.h"
 
 HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr,
@@ -38,12 +39,14 @@ HMDWindow::HMDWindow(VideoPlayer *video_player, PsvrSensors *psvr,
 
 	resize(640, 480);
 
+  compose_scr_.resize(kScrWidth * kScrHeight);
+  LoadTestInfo();
+
 	hmd_widget = new HMDWidget(video_player, psvr);
   info_data_ = hmd_widget->GetInfoData();
   setCentralWidget(hmd_widget);
   ShowMenu();
 
-//  LoadTestInfo();
 
   connect(video_player, SIGNAL(Playing()), this, SLOT(PlayerPlaying()));
 }
@@ -90,11 +93,10 @@ void HMDWindow::closeEvent(QCloseEvent *event)
 }
 
 void HMDWindow::LoadTestInfo() {
-  if (!info_data_) { return; }
   std::ifstream f("info_test.data", std::ios_base::binary);
   if (f) {
-    f.read(reinterpret_cast<char*>(info_data_),
-        HMDWidget::kInfoHeight * sizeof(HMDWidget::InfoTextureRow));
+    test_scr_.resize(kScrWidth * kScrHeight);
+    f.read(reinterpret_cast<char*>(test_scr_.data()), kScrWidth * kScrHeight * sizeof(uint32_t));
   }
 }
 
@@ -186,24 +188,22 @@ void HMDWindow::ShowMenu()
 }
 
 void HMDWindow::UpdateInformation() {
-  auto scr = info_scr_.GetInfoScr();
-  auto wd = info_scr_.GetInfoScrWidth();
-  auto ht = info_scr_.GetInfoScrHeight();
-  if ((kInfoScrXPos + wd) > HMDWidget::kInfoWidth) {
-    assert(false);
-    return;
+  if (compose_scr_.size() == test_scr_.size()) {
+    memcpy(compose_scr_.data(), test_scr_.data(), compose_scr_.size() * sizeof(uint32_t));
+  } else {
+    std::memset(compose_scr_.data(), 0, compose_scr_.size() * sizeof(uint32_t));
   }
-  if ((kInfoScrYPos + ht) > HMDWidget::kInfoHeight) {
+
+  auto& scr = info_scr_.GetInfoScr();
+  AddTile(compose_scr_, kScrWidth, scr, info_scr_.GetInfoScrWidth(),
+      kInfoScrXPos, kInfoScrYPos);
+
+  if (kScrWidth != HMDWidget::kInfoWidth || kScrHeight != HMDWidget::kInfoHeight) {
     assert(false);
     return;
   }
 
-  for (size_t y = 0; y < ht; ++y) {
-    for (size_t x = 0; x < wd; ++x) {
-      info_data_[kInfoScrYPos + y][kInfoScrXPos + x] = scr[y * wd + x];
-    }
-  }
-
+  memcpy(info_data_, compose_scr_.data(), compose_scr_.size() * sizeof(uint32_t));
   hmd_widget->ForceUpdateInfo();
 }
 

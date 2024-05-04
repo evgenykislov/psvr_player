@@ -71,10 +71,15 @@ class HMDWindow : public QMainWindow
 		void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
  private:
+  static const size_t kScrWidth = 1920;
+  static const size_t kScrHeight = 1920;
   static const size_t kInfoScrXPos = 510;
   static const size_t kInfoScrYPos = 510;
   const uint64_t kBeforeEndInterval = 10000; //!< Minimal interval before end of movie after fastforward
   const uint64_t kForwardStep = 3000; //!< Интервал перемотки
+
+  std::vector<uint32_t> test_scr_; //!< Загруженный тестовый экран. Может быть мустой массив, если тестовый экран не загружен
+  std::vector<uint32_t> compose_scr_; //!< Память для объединения тестового экрана и меню
 
   HMDWidget::InfoTextureRow* info_data_;
   InformationScreen info_scr_;
