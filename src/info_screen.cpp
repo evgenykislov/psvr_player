@@ -18,12 +18,12 @@ InformationScreen::~InformationScreen() {
 
 }
 
-const uint32_t* InformationScreen::GetInfoScr() {
+const std::vector<uint32_t>& InformationScreen::GetInfoScr() {
   if (screen_changed_) {
     screen_changed_ = false;
     DrawScreen();
   }
-  return info_scr_.data();
+  return info_scr_;
 
 }
 

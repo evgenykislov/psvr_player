@@ -28,7 +28,7 @@ class InformationScreen {
     kRePositionAction, // Сменить позицию проигрывания
   };
 
-  const uint32_t* GetInfoScr();
+  const std::vector<uint32_t>& GetInfoScr();
   size_t GetInfoScrWidth() const { return kScrWidth; }
   size_t GetInfoScrHeight() const { return kScrHeight; }
 
