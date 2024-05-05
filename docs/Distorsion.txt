@@ -1,0 +1,102 @@
+Distortion compensation
+The lenses in the PSVR produce a "Cushion" type distortion of the image. Compensation is required to bring the image to the correct appearance. Compensation is done algorithmically in the vertex shader in the function
+vec4 FixDistorsion(vec4 pos)
+The function turns the original coordinates for rendering into "compensated" coordinates.
+The function exists in two instances:
+- when the DEBUG_DISTORSION macro definition is on (debugging);
+- when the DEBUG_DISTORSION macro definition is disabled (working).
+The debug variant is used to select the compensation function. The working variant is used to use an already prepared compensation function.
+
+Selection of the compensation function:
+Compensation selection is done in 5 steps:
+- include squares;
+- select constants;
+- select the function;
+- insert the function into the shader;
+- turn squares off.
+
+   Enabling squares:
+You need to use the test screen square for matching: in the docs/test_screens.tar.gz archive, take the file test_screens/info_square.data. Copy the file to the application start folder and rename it to
+info_test.data. As a result, the file info_test.data with the size of 14400 kBytes should appear next to the psvr_player program.
+When the player is launched, a field with 4 squares should appear (it is acceptable to show only part of the border from the 4th square).
+The user should start the application and in the helmet watch how straight the squares are shown and how much they evenly grow in size: ideally, all figures should be squares and proportionally increase in size: the 2nd square is twice (in length) larger than the 1st. The 3rd is three times larger than the 1st, the 4th is four times larger.
+
+   Adjusting constants:
+To adjust the DEBUG_DISTORSION macro definition and adjust the constants kDistorsion0 - kDistorsion6. The value of the constants can be initially set to 1.0 for all or you can use a previously selected variant as a basis. The setting is performed according to the following scheme:
+- kDistorsion0 is always equal to 1.0;
+- kDistorsion1 is initially set to 1.0. Further, when setting the constant kDistorsion2, a small adjustment of kDistorsion1 is possible;
+- kDistorsion2 is selected so that the sides of the 1st square are straight. A slight "barrel" is allowed, which is corrected by the kDistorsion1 parameter;
+- kDistorsion3 is chosen so that the center line (the segment drawn through the midpoints of the opposite sides of the square) of the 1st and 2nd squares differ by a factor of 2;
+- kDistorsion4 is chosen so that the 2nd square is square and the midline of the 3rd square increases uniformly from the 1st and 2nd squares;
+- kDistorsion5 is chosen so that the 3rd square is square. We ignore the very corners of the square for now;
+- kDistorsion6 is chosen so that the corners of the 3rd square are "even" and the lines of the 4th square (if they are visible somewhere) are straight.
+Then the constants can be slightly adjusted to make all squares look even, proportional and harmonious.
+
+   Selecting a function:
+Function fitting is done in your favorite spreadsheet processor (excel, calc) or other application. A graph of the function is created by plotting points with abscissas:
+0.0; 0.25; 0.354; 0.5; 0.75; 1.0; 1.4.
+The selected constants kDistorsion0 - kDistorsion6 are used as ordinates of the points.
+Then you build a trend line on the points (or approximate these points in another way) and the resulting trend equation is the required function.
+Note: it may be easier to look for a function for inverse ordinates: 1/kDistorsion0 - 1/kDistorsion6 and then convert the obtained value from inverse to forward.
+
+   We insert the function into the shader:
+We insert the function obtained in the previous step into the code in the working version of vec4 FixDistorsion(vec4 pos).
+Comment out the DEBUG_DISTORSION macro definition to use the working function.
+
+   Turn off the squares:
+We delete the info_test.data file from the program folder.
+
+That's all. Check the result, if unsatisfied bring it to the desired quality according to the instructions above.
+
+
+---------
+Компенсация дисторсии
+Линзы в PSVR дают искажение изображение типа "Подушка". Для приведения изображения к правильному виду требуется компенсация. Компенсация делается алгоритмически в вершинном шейдере в функции
+vec4 FixDistorsion(vec4 pos)
+Функция превращает исходные координаты для отрисовки в "компенсированные".
+Функция существует в двух экземплярах:
+- при включенном макроопределении DEBUG_DISTORSION (отладочное);
+- при выключенном макроопределении DEBUG_DISTORSION (рабочее).
+Отладочный вариант используется для подбора функции компенсации. Рабочий вариант служит для использования уже готовой функции компенсации.
+
+Подбор функции компенсации:
+Подбор компенсации делается в 5 шагов:
+- включаем квадраты;
+- подбираем константы;
+- подбираем функцию;
+- вставляем функцию в шейдер;
+- выключаем квадраты.
+
+   Включаем квадраты:
+Для подбора нужно использовать тестовый экран square: в архиве docs/test_screens.tar.gz берём файл test_screens/info_square.data. Копируем файл в папку запуска приложения и переименовываем его в
+info_test.data. Каке результат, рядом с программой psvr_player должен появится файл info_test.data размером 14400 кБайт.
+При запуске проигрывателя должно появится поле с 4-мя квадратами (допустимо от 4-го показываться только часть каймы).
+Пользователь должен запускать приложение и в шлеме смотреть, насколько прямые показываются квадраты и насколько они равномерно растут в размере: в идеале все фигуры должны быть квадратами и пропорционально увеличиваться в размере: 2-ой квадрат в два раза (по длине) больше 1-го. 3-й в три раза больше 1-го, 4-й - в четыре.
+
+   Подбираем константы:
+Для корректировки раскомментируется макроопределение DEBUG_DISTORSION и производится настройка констант kDistorsion0 - kDistorsion6. Значение констант можно изначально выставить в 1.0 для всех либо использовать уже ранее подобранный вариант за основу. Настройка производится по следующей схеме:
+- kDistorsion0 всегда равна 1.0;
+- kDistorsion1 изначально ставится в 1.0. Далее при настройке константы kDistorsion2 возможна небольшая корректировка kDistorsion1;
+- kDistorsion2 подбирается так, чтобы стороны 1-го квадрата были прямыми. Допустима лёгкая "бочка", которая корректируется параметром kDistorsion1;
+- kDistorsion3 подбирается так, чтобы средняя линия (отрезок , проведённый через середины противоположных сторон квадрата) 1-го и 2-го квадрата отличались в 2 раза;
+- kDistorsion4 подбирается так, чтобы 2-ой квадрат был квадратным и средняя линия 3-го квадрата увеличивалась равномерно от 1-го и 2-го квадратов;
+- kDistorsion5 подбирается, чтобы 3-й квадрат был квадратным. Пока не обращаем внимания на самые уголки квадрата;
+- kDistorsion6 подбирается, чтобы уголки 3-го квадрата были "ровными" и линии 4-го квадрата (если они где-то видны) были прямыми.
+Потом константы можно чуть чуть откорректировать, чтобы все квадраты смотрелись ровно, пропорционально и гармонично.
+
+   Подбираем функцию:
+Подбор функции делается в вашем любимом табличном процессоре (excel, calc) или др. приложении. Создаётся график функции по точкам с абсциссами:
+0.0; 0.25; 0.354; 0.5; 0.75; 1.0; 1.4.
+В качестве ординат точек используются подобранные константы kDistorsion0 - kDistorsion6.
+Далее по точкам строите линию тренда (или другим способом аппроксимируете эти точки) и полученное уравнение тренда и есть требуемая функция.
+Прим.: возможно, будет легче искать функцию для обратных ординат: 1/kDistorsion0 - 1/kDistorsion6 и потом полученное значение из обратного превращаем в прямое.
+
+   Вставляем функцию в шейдер:
+Полученную в предыдущем шаге функцию вставляем в код в рабочий вариант vec4 FixDistorsion(vec4 pos).
+Закомментируем макроопределение DEBUG_DISTORSION, чтобы использовать рабочую функцию.
+
+   Выключаем квадраты:
+Из папки с программой удаляем файл info_test.data.
+
+Это всё. Проверяем результат, при неудовлетворении доводим до желаемого качества по инструкции выше.
+
